@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/LPvdT/go-with-tests/server"
+	"github.com/LPvdT/go-with-tests/build_an_application/server"
 )
 
 func main() {
