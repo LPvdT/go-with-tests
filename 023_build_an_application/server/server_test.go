@@ -12,9 +12,9 @@ func TestGETPlayers(t *testing.T) {
 
 	PlayerServer(response, request)
 
-	t.Run("GET / should return 200 OK", func(t *testing.T) {
+	t.Run("returns Pepper's score", func(t *testing.T) {
 		got := response.Body.String()
-		want := "200 OK"
+		want := "20"
 
 		if got != want {
 			t.Errorf("got %q, want %q", got, want)
