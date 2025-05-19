@@ -16,6 +16,18 @@ func (s *StubPlayerStore) GetPlayerScore(name string) int {
 	return score
 }
 
+func newGetScoreRequest(name string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/players/%s", name), nil)
+	return req
+}
+
+func assertResponseBody(t testing.TB, got, want string) {
+	t.Helper()
+	if got != want {
+		t.Errorf("response body is wrong, got %q want %q", got, want)
+	}
+}
+
 func TestGETPlayers(t *testing.T) {
 	store := StubPlayerStore{
 		map[string]int{
@@ -42,16 +54,18 @@ func TestGETPlayers(t *testing.T) {
 
 		assertResponseBody(t, response.Body.String(), "10")
 	})
-}
 
-func newGetScoreRequest(name string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/players/%s", name), nil)
-	return req
-}
+	t.Run("returns 404 on missing player", func(t *testing.T) {
+		request := newGetScoreRequest("Apollo")
+		response := httptest.NewRecorder()
 
-func assertResponseBody(t testing.TB, got, want string) {
-	t.Helper()
-	if got != want {
-		t.Errorf("response body is wrong, got %q want %q", got, want)
-	}
+		server.ServeHTTP(response, request)
+
+		got := response.Code
+		want := http.StatusNotFound
+
+		if got != want {
+			t.Errorf("got %d, want %d", got, want)
+		}
+	})
 }
