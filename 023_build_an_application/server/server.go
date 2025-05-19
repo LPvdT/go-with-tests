@@ -6,17 +6,20 @@ import (
 	"strings"
 )
 
-// PlayerServer currently returns "20" given _any_ request.
 func PlayerServer(w http.ResponseWriter, r *http.Request) {
 	player := strings.TrimPrefix(r.URL.Path, "/players/")
 
-	if player == "Pepper" {
-		fmt.Fprint(w, "20")
-		return
+	fmt.Fprint(w, GetPlayerScore(player))
+}
+
+func GetPlayerScore(name string) string {
+	if name == "Pepper" {
+		return "20"
 	}
 
-	if player == "Floyd" {
-		fmt.Fprint(w, "10")
-		return
+	if name == "Floyd" {
+		return "10"
 	}
+
+	return ""
 }
