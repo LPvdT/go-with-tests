@@ -15,6 +15,10 @@ type PlayerServer struct {
 	store PlayerStore
 }
 
+func NewPlayerServer(store PlayerStore) *PlayerServer {
+	return &PlayerServer{store: store}
+}
+
 func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	player := strings.TrimPrefix(r.URL.Path, "/players/")
 
