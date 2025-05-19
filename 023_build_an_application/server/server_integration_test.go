@@ -1,13 +1,15 @@
-package main
+package server
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/LPvdT/go-with-tests/application/store"
 )
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	store := InMemoryPlayerStore{}
+	store := store.InMemoryPlayerStore{}
 	server := PlayerServer{&store}
 	player := "Pepper"
 
