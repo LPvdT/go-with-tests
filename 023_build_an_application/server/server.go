@@ -37,16 +37,18 @@ func NewPlayerServer(store PlayerStore) *PlayerServer {
 }
 
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
-	leagueTable := []Player{
-		{"Chris", 20},
-	}
-
-	if err := json.NewEncoder(w).Encode(leagueTable); err != nil {
+	if err := json.NewEncoder(w).Encode(p.getLeagueTable()); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (p *PlayerServer) getLeagueTable() []Player {
+	return []Player{
+		{"Chris", 20},
+	}
 }
 
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
