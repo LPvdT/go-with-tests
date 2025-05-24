@@ -117,8 +117,8 @@ production/deploy: audit no-dirty
 		upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME} || (echo "> \033[31m\033[1mUPX failed for ${OS}/${ARCH}, skipping...\033[0m"; true); \
 	fi
 
-## matrix/production/deploy: deploy the application to production for all OS/ARCH combinations
-.PHONY: matrix/production/deploy
-matrix/production/deploy: $(MATRIX_BINARY_PATHS) production/deploy
+## production/deploy/matrix: deploy the application to production for all OS/ARCH combinations
+.PHONY: production/deploy/matrix
+production/deploy/matrix: $(MATRIX_BINARY_PATHS) production/deploy
 $(OUTPUT_DIR)/%:
 	@$(MAKE) production/deploy OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
