@@ -9,6 +9,8 @@ import (
 	"github.com/LPvdT/go-with-tests/application/common"
 )
 
+const jsonContentType = "application/json"
+
 type PlayerStore interface {
 	GetPlayerScore(name string) int
 	RecordWin(name string)
@@ -35,12 +37,11 @@ func NewPlayerServer(store PlayerStore) *PlayerServer {
 }
 
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
-	if err := json.NewEncoder(w).Encode(p.store.GetLeague()); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	w.Header().Set("content-type", jsonContentType)
 
-	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(p.store.GetLeague()); err != nil {
+		fmt.Println(err)
+	}
 }
 
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
