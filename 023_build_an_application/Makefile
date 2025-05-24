@@ -138,7 +138,7 @@ production/deploy: audit no-dirty
 	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
 	@if [ "${OS}" = "darwin" ]; then \
-		upx --best --lzma --force-macos ${OUTPUT_DIR}/bin/${BINARY_NAME} || true; \
+		upx --best --lzma --force-macos ${OUTPUT_DIR}/bin/${BINARY_NAME} || (echo "> \033[31m\033[1mUPX failed for ${OS}/${ARCH}, skipping...\033[0m"; true); \
 	else \
-		upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME} || true; \
+		upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME} || (echo "> \033[31m\033[1mUPX failed for ${OS}/${ARCH}, skipping...\033[0m"; true); \
 	fi
