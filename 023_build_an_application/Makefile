@@ -7,11 +7,17 @@ output_dir := .
 
 # Set the OS and architecture
 OS := linux
-ARCH := arm64
+ARCH := amd64
 
 # Change the binary name depending on the OS
 ifeq "$(OS)" "windows"
-	binary_name := ${binary_name}.exe
+	binary_name := ${binary_name}_${OS}_${ARCH}.exe
+endif
+ifeq "$(OS)" "darwin"
+	binary_name := ${binary_name}_${OS}_${ARCH}
+endif
+ifeq "$(OS)" "linux"
+	binary_name := ${binary_name}_${OS}_${ARCH}
 endif
 
 
