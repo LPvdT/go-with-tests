@@ -37,7 +37,10 @@ confirm:
 
 .PHONY: no-dirty
 no-dirty:
-	@test -z "$(shell git status --porcelain)"
+	@if [ -n "$(shell git status --porcelain)" ]; then \
+		echo "Error: Working directory is not clean. Please commit or stash your changes."; \
+		exit 1; \
+	fi
 
 .PHONY: coverage
 coverage:
@@ -117,4 +120,4 @@ push: confirm audit no-dirty
 .PHONY: production/deploy
 production/deploy: confirm audit no-dirty
 	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${output_dir}/bin/${binary_name} ${main_package_path}
-	upx -5 ${output_dir}/bin/${binary_name}
+	upx --best --ultra-brute ${output_dir}/bin/${binary_name}
