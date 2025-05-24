@@ -1,3 +1,4 @@
+// Continue here: https://quii.gitbook.io/learn-go-with-tests/build-an-application/json#write-the-test-first
 // Repository: https://github.com/LPvdT/go-with-tests/tree/feature/json-routing-embedding
 
 package main
