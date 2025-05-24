@@ -138,7 +138,7 @@ production/deploy: audit no-dirty
 	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
 	@if [ "${OS}" = "darwin" ]; then \
-		upx --best --lzma --force-macos ${OUTPUT_DIR}/bin/${BINARY_NAME}; \
+		upx --best --lzma --force-macos ${OUTPUT_DIR}/bin/${BINARY_NAME} || true; \
 	else \
-		upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME}; \
+		upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME} || true; \
 	fi
