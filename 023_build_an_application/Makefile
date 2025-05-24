@@ -116,5 +116,5 @@ push: confirm audit no-dirty
 ## production/deploy: deploy the application to production
 .PHONY: production/deploy
 production/deploy: confirm audit no-dirty
-	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${output_dir}/bin/linux_amd64/${binary_name} ${main_package_path}
-	upx -5 ${output_dir}/bin/linux_amd64/${binary_name}
+	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${output_dir}/bin/${binary_name} ${main_package_path}
+	upx -5 ${output_dir}/bin/${binary_name}
