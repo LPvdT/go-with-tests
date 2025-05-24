@@ -95,6 +95,12 @@ tidy:
 build:
 	GOOS=${OS} GOARCH=${ARCH} go build -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
+## build/matrix: build the application for all OS/ARCH combinations
+.PHONY: build/matrix
+build/matrix: $(MATRIX_BINARY_PATHS) build
+$(OUTPUT_DIR)/%:
+	@$(MAKE) build OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
+
 ## run: run the  application
 .PHONY: run
 run: build
@@ -129,3 +135,9 @@ production/deploy: audit no-dirty
 	else \
 		upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME} || (echo "> \033[31m\033[1mUPX failed for ${OS}/${ARCH}, skipping...\033[0m"; true); \
 	fi
+
+## matrix/production/deploy: deploy the application to production for all OS/ARCH combinations
+.PHONY: matrix/production/deploy
+matrix/production/deploy: $(MATRIX_BINARY_PATHS) production/deploy
+$(OUTPUT_DIR)/%:
+	@$(MAKE) production/deploy OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
