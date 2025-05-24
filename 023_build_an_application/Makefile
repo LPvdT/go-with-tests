@@ -1,23 +1,31 @@
 .DEFAULT_GOAL := help
 
-# Change these variables as necessary.
-main_package_path := .
-binary_name := http-server
-output_dir := .
+# Change these variables as necessary
+MAIN_PACKAGE_PATH := .
+BINARY_NAME := http-server
+OUTPUT_DIR := .
 
-# Set the OS and architecture
-OS := linux
-ARCH := amd64
+# Set the OS and ARCH options based for cross-compilation
+OS_LIST := linux darwin windows
+ARCH_LIST := amd64 arm64
+
+BINARY_NAMES := $(foreach os,$(OS_LIST),$(foreach arch,$(ARCH_LIST),$(BINARY_NAME)_$(os)_$(arch)))
+BINARY_PATHS := $(foreach binary,$(BINARY_NAMES),$(OUTPUT_DIR)/$(binary))
+
+.PHONY: build_matrix
+build_matrix: $(BINARY_PATHS)
+$(BINARY_PATHS):
+	@$(MAKE) build OUTPUT_DIR=$(dir $@) BINARY_NAME=${BINARY_NAME} OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
 
 # Change the binary name depending on the OS
 ifeq "$(OS)" "windows"
-	binary_name := ${binary_name}_${OS}_${ARCH}.exe
+	BINARY_NAME := ${BINARY_NAME}_${OS}_${ARCH}.exe
 endif
 ifeq "$(OS)" "darwin"
-	binary_name := ${binary_name}_${OS}_${ARCH}
+	BINARY_NAME := ${BINARY_NAME}_${OS}_${ARCH}
 endif
 ifeq "$(OS)" "linux"
-	binary_name := ${binary_name}_${OS}_${ARCH}
+	BINARY_NAME := ${BINARY_NAME}_${OS}_${ARCH}
 endif
 
 
@@ -68,8 +76,8 @@ test:
 ## test/cover: run all tests and display coverage
 .PHONY: test/coverage
 test/cover: coverage
-	go test -v -race -buildvcs=true -coverprofile=${output_dir}/coverage/coverage.out ./...
-	go tool cover -html=${output_dir}/coverage/coverage.out -o ${output_dir}/coverage/coverage.html
+	go test -v -race -buildvcs=true -coverprofile=${OUTPUT_DIR}/coverage/coverage.out ./...
+	go tool cover -html=${OUTPUT_DIR}/coverage/coverage.out -o ${OUTPUT_DIR}/coverage/coverage.html
 
 ## upgradeable: list direct dependencies that have upgrades available
 .PHONY: upgradeable
@@ -90,18 +98,18 @@ tidy:
 ## build: build the application
 .PHONY: build
 build:
-	GOOS=${OS} GOARCH=${ARCH} go build -o=${output_dir}/bin/${binary_name} ${main_package_path}
+	GOOS=${OS} GOARCH=${ARCH} go build -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
 ## run: run the  application
 .PHONY: run
 run: build
-	${output_dir}/bin/${binary_name}
+	${OUTPUT_DIR}/bin/${BINARY_NAME}
 
 ## run/live: run the application with reloading on file changes
 .PHONY: run/live
 run/live:
 	go run github.com/cosmtrek/air@latest \
-		--build.cmd "make build" --build.bin "${output_dir}/bin/${binary_name}" --build.delay "100" \
+		--build.cmd "make build" --build.bin "${OUTPUT_DIR}/bin/${BINARY_NAME}" --build.delay "100" \
 		--build.exclude_dir "" \
 		--build.include_ext "go, tpl, tmpl, html, css, scss, js, ts, sql, jpeg, jpg, gif, png, bmp, svg, webp, ico" \
 		--misc.clean_on_exit "true"
@@ -119,5 +127,5 @@ push: confirm audit no-dirty
 ## production/deploy: deploy the application to production
 .PHONY: production/deploy
 production/deploy: confirm audit no-dirty
-	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${output_dir}/bin/${binary_name} ${main_package_path}
-	upx --best --lzma ${output_dir}/bin/${binary_name}
+	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
+	upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME}
