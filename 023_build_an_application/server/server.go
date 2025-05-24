@@ -5,21 +5,19 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/LPvdT/go-with-tests/application/common"
 )
 
 type PlayerStore interface {
 	GetPlayerScore(name string) int
 	RecordWin(name string)
+	GetLeague() []common.Player
 }
 
 type PlayerServer struct {
 	store PlayerStore
 	http.Handler
-}
-
-type Player struct {
-	Name string
-	Wins int
 }
 
 func NewPlayerServer(store PlayerStore) *PlayerServer {
@@ -37,18 +35,12 @@ func NewPlayerServer(store PlayerStore) *PlayerServer {
 }
 
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
-	if err := json.NewEncoder(w).Encode(p.getLeagueTable()); err != nil {
+	if err := json.NewEncoder(w).Encode(p.store.GetLeague()); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-}
-
-func (p *PlayerServer) getLeagueTable() []Player {
-	return []Player{
-		{"Chris", 20},
-	}
 }
 
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
