@@ -136,4 +136,7 @@ push: confirm audit no-dirty
 .PHONY: production/deploy
 production/deploy: audit no-dirty
 	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
+	ifeq ("${OS}", "darwin")
+		upx --best --lzma --force-macos ${OUTPUT_DIR}/bin/${BINARY_NAME}
+	endif
 	upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME}
