@@ -120,4 +120,4 @@ push: confirm audit no-dirty
 .PHONY: production/deploy
 production/deploy: confirm audit no-dirty
 	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${output_dir}/bin/${binary_name} ${main_package_path}
-	upx --best --ultra-brute ${output_dir}/bin/${binary_name}
+	upx --best --lzma ${output_dir}/bin/${binary_name}
