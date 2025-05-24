@@ -9,21 +9,8 @@ OUTPUT_DIR := .
 OS_LIST := linux darwin windows
 ARCH_LIST := amd64 arm64
 
-BINARY_NAMES := $(foreach os,$(OS_LIST),$(foreach arch,$(ARCH_LIST),$(BINARY_NAME)_$(os)_$(arch)))
-BINARY_PATHS := $(foreach binary,$(BINARY_NAMES),$(OUTPUT_DIR)/$(binary))
-
-
-.PHONY: build/matrix
-build/matrix: $(BINARY_PATHS) build
-$(OUTPUT_DIR)/%:
-	@$(MAKE) build OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
-
-
-.PHONY: matrix/production/deploy
-matrix/production/deploy: $(BINARY_PATHS) production/deploy
-$(OUTPUT_DIR)/%:
-	@$(MAKE) production/deploy OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
-
+MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST),$(foreach arch,$(ARCH_LIST),$(BINARY_NAME)_$(os)_$(arch)))
+MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(binary))
 
 # Change the binary name depending on the OS
 ifeq "$(OS)" "windows"
