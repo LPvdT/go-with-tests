@@ -134,6 +134,6 @@ push: confirm audit no-dirty
 
 ## production/deploy: deploy the application to production
 .PHONY: production/deploy
-production/deploy: confirm audit no-dirty
+production/deploy: audit no-dirty
 	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 	upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME}
