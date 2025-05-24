@@ -13,9 +13,9 @@ BINARY_NAMES := $(foreach os,$(OS_LIST),$(foreach arch,$(ARCH_LIST),$(BINARY_NAM
 BINARY_PATHS := $(foreach binary,$(BINARY_NAMES),$(OUTPUT_DIR)/$(binary))
 
 .PHONY: build_matrix
-build_matrix: $(BINARY_PATHS)
-$(BINARY_PATHS):
-	@$(MAKE) build OUTPUT_DIR=$(dir $@) BINARY_NAME=${BINARY_NAME} OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
+build_matrix: $(BINARY_PATHS) build
+$(OUTPUT_DIR)/%:
+	@$(MAKE) build OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
 
 # Change the binary name depending on the OS
 ifeq "$(OS)" "windows"
