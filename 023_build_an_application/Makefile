@@ -139,6 +139,6 @@ production/deploy: audit no-dirty
 
 	@if [ "${OS}" = "darwin" ]; then \
 		upx --best --lzma --force-macos ${OUTPUT_DIR}/bin/${BINARY_NAME}; \
+	else \
+		upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME}; \
 	fi
-	
-	upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME}
