@@ -1,15 +1,35 @@
 .DEFAULT_GOAL := help
 
-# Change these variables as necessary
+# ==================================================================================== #
+# PACKAGE CONFIGURATION
+# ==================================================================================== #
+
+# Sets the path to the main package, binary name, and output directory
 MAIN_PACKAGE_PATH := .
 BINARY_NAME := http-server
 OUTPUT_DIR := .
+
+# ==================================================================================== #
+# SINGLE BINARY CONFIGURATION
+# ==================================================================================== #
+
+OS := linux
+ARCH := amd64
+
+# ==================================================================================== #
+# CROSS-COMPILE CONFIGURATION (/matrix recipes)
+# ==================================================================================== #
 
 # Set the OS and ARCH options based for cross-compilation
 OS_LIST := linux darwin windows
 ARCH_LIST := amd64 arm64
 
+# ===================================================================================== #
+
+# Create a list of all possible OS/ARCH combinations
 MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST),$(foreach arch,$(ARCH_LIST),$(BINARY_NAME)_$(os)_$(arch)))
+
+# Create the full paths for the binaries
 MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(binary))
 
 # Change the binary name depending on the OS
@@ -22,7 +42,6 @@ endif
 ifeq "$(OS)" "linux"
 	BINARY_NAME := ${BINARY_NAME}_${OS}_${ARCH}
 endif
-
 
 # ==================================================================================== #
 # HELPERS
@@ -54,7 +73,7 @@ coverage:
 audit: test
 	go mod tidy -diff
 	go mod verify
-	test -z "$(shell gofmt -l .)" 
+	test -z "$(shell gofumpt -l .)" 
 	go vet ./...
 	go run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
 	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
@@ -74,7 +93,6 @@ test/cover: coverage
 .PHONY: upgradeable
 upgradeable:
 	@go list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all
-
 
 # ==================================================================================== #
 # DEVELOPMENT
@@ -97,7 +115,7 @@ build/matrix: $(MATRIX_BINARY_PATHS) build
 $(OUTPUT_DIR)/%:
 	@$(MAKE) build OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
 
-## run: run the  application
+## run: run the application
 .PHONY: run
 run: build
 	${OUTPUT_DIR}/bin/${BINARY_NAME}
