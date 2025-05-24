@@ -7,12 +7,14 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/LPvdT/go-with-tests/application/common"
 )
 
 type StubPlayerStore struct {
 	scores   map[string]int
 	winCalls []string
-	league   []Player
+	league   []common.Player
 }
 
 func (s *StubPlayerStore) GetPlayerScore(name string) int {
@@ -22,6 +24,10 @@ func (s *StubPlayerStore) GetPlayerScore(name string) int {
 
 func (s *StubPlayerStore) RecordWin(name string) {
 	s.winCalls = append(s.winCalls, name)
+}
+
+func (s *StubPlayerStore) GetLeague() []common.Player {
+	return s.league
 }
 
 func TestGETPlayers(t *testing.T) {
@@ -119,10 +125,10 @@ func newPostWinRequest(name string) *http.Request {
 
 func TestLeague(t *testing.T) {
 	t.Run("it returns 200 on /league", func(t *testing.T) {
-		wantedLeague := []Player{
-			{"Cleo", 32},
-			{"Chris", 20},
-			{"Tiest", 14},
+		wantedLeague := []common.Player{
+			{Name: "Cleo", Wins: 32},
+			{Name: "Chris", Wins: 20},
+			{Name: "Tiest", Wins: 14},
 		}
 
 		store := StubPlayerStore{nil, nil, wantedLeague}
@@ -133,7 +139,7 @@ func TestLeague(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		var got []Player
+		var got []common.Player
 
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
