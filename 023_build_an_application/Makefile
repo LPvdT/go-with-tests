@@ -106,9 +106,9 @@ run: build
 # OPERATIONS
 # ==================================================================================== #
 
-## production/deploy: deploy the application to production
-.PHONY: production/deploy
-production/deploy: audit no-dirty
+## production/pack: pack (compress) the application for production
+.PHONY: production/pack
+production/pack: audit no-dirty
 	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}
 
 	@if [ "${OS}" = "darwin" ]; then \
@@ -117,8 +117,8 @@ production/deploy: audit no-dirty
 		upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME} || (echo "> \033[31m\033[1mUPX failed for ${OS}/${ARCH}, skipping...\033[0m"; true); \
 	fi
 
-## production/deploy/matrix: deploy the application to production for all OS/ARCH combinations
-.PHONY: production/deploy/matrix
-production/deploy/matrix: $(MATRIX_BINARY_PATHS) production/deploy
+## production/pack/matrix: pack (compress) the application for production for all OS/ARCH combinations
+.PHONY: production/pack/matrix
+production/pack/matrix: $(MATRIX_BINARY_PATHS) production/pack
 $(OUTPUT_DIR)/%:
-	@$(MAKE) production/deploy OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
+	@$(MAKE) production/pack OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
