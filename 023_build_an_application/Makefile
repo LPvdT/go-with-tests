@@ -34,10 +34,6 @@ help:
 	@echo 'Usage:'
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
 	
-.PHONY: confirm
-confirm:
-	@echo -n 'Are you sure? [y/N] ' && read ans && [ $${ans:-N} = y ]
-
 .PHONY: no-dirty
 no-dirty:
 	@if [ -n "$(shell git status --porcelain)" ]; then \
@@ -106,24 +102,9 @@ $(OUTPUT_DIR)/%:
 run: build
 	${OUTPUT_DIR}/bin/${BINARY_NAME}
 
-## run/live: run the application with reloading on file changes
-.PHONY: run/live
-run/live:
-	go run github.com/cosmtrek/air@latest \
-		--build.cmd "make build" --build.bin "${OUTPUT_DIR}/bin/${BINARY_NAME}" --build.delay "100" \
-		--build.exclude_dir "" \
-		--build.include_ext "go, tpl, tmpl, html, css, scss, js, ts, sql, jpeg, jpg, gif, png, bmp, svg, webp, ico" \
-		--misc.clean_on_exit "true"
-
-
 # ==================================================================================== #
 # OPERATIONS
 # ==================================================================================== #
-
-## push: push changes to the remote Git repository
-.PHONY: push
-push: confirm audit no-dirty
-	git push
 
 ## production/deploy: deploy the application to production
 .PHONY: production/deploy
