@@ -6,10 +6,11 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
+	"github.com/LPvdT/go-with-tests/application/internal/filesystem"
 	"github.com/LPvdT/go-with-tests/application/server"
-	"github.com/LPvdT/go-with-tests/application/store"
 )
 
 var (
@@ -17,8 +18,15 @@ var (
 	serverAddress string = strings.Join([]string{"localhost", port}, ":")
 )
 
+const dbFileName = "game.db.json"
+
 func main() {
-	store := store.NewInMemoryPlayerStore()
+	db, err := os.OpenFile(dbFileName, os.O_RDWR|os.O_CREATE, 0o666)
+	if err != nil {
+		log.Fatalf("problem opening %s %v", dbFileName, err)
+	}
+
+	store := &filesystem.FileSystemPlayerStore{Database: db}
 	server := server.NewPlayerServer(store)
 
 	log.Printf("Starting server on http://%s", serverAddress)
