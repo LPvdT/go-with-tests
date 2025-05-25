@@ -9,15 +9,15 @@ import (
 )
 
 type FileSystemPlayerStore struct {
-	database io.ReadWriteSeeker
+	Database io.ReadWriteSeeker
 }
 
 func (f *FileSystemPlayerStore) GetLeague() common.League {
 	// Reset the reader to the start of the file
-	if _, err := f.database.Seek(0, io.SeekStart); err != nil {
+	if _, err := f.Database.Seek(0, io.SeekStart); err != nil {
 		log.Fatalf("could not seek to start of database: %v", err)
 	}
-	league, _ := common.NewLeague(f.database)
+	league, _ := common.NewLeague(f.Database)
 	return league
 }
 
@@ -45,12 +45,12 @@ func (f *FileSystemPlayerStore) RecordWin(name string) {
 	}
 
 	// Reset the reader to the start of the file
-	if _, err := f.database.Seek(0, io.SeekStart); err != nil {
+	if _, err := f.Database.Seek(0, io.SeekStart); err != nil {
 		log.Fatalf("could not seek to start of database: %v", err)
 	}
 
 	// Write the updated league back to the file
-	if err := json.NewEncoder(f.database).Encode(league); err != nil {
+	if err := json.NewEncoder(f.Database).Encode(league); err != nil {
 		log.Fatalf("could not write to database: %v", err)
 	}
 }
