@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/LPvdT/go-with-tests/application/common"
+	"github.com/LPvdT/go-with-tests/application/internal/common"
 	"github.com/LPvdT/go-with-tests/application/internal/filesystem"
 )
 

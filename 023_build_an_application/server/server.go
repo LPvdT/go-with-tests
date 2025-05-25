@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/LPvdT/go-with-tests/application/common"
+	"github.com/LPvdT/go-with-tests/application/internal/common"
 )
 
 const jsonContentType = "application/json"
