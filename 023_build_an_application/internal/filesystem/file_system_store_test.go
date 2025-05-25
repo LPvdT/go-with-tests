@@ -1,6 +1,7 @@
 package filesystem
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/LPvdT/go-with-tests/application/common"
@@ -14,7 +15,9 @@ func TestFileSystemStore(t *testing.T) {
 		]`)
 		defer cleanDatabase()
 
-		store := FileSystemPlayerStore{database}
+		store := FileSystemPlayerStore{
+			Database: json.NewEncoder(&common.Tape{File: database}),
+		}
 
 		got := store.GetLeague()
 		want := []common.Player{
@@ -35,7 +38,9 @@ func TestFileSystemStore(t *testing.T) {
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
 
-		store := FileSystemPlayerStore{database}
+		store := FileSystemPlayerStore{
+			Database: json.NewEncoder(&common.Tape{File: database}),
+		}
 
 		got := store.GetPlayerScore("Chris")
 		want := 33
@@ -49,7 +54,9 @@ func TestFileSystemStore(t *testing.T) {
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
 
-		store := FileSystemPlayerStore{database}
+		store := FileSystemPlayerStore{
+			Database: json.NewEncoder(&common.Tape{File: database}),
+		}
 
 		store.RecordWin("Chris")
 
@@ -65,7 +72,9 @@ func TestFileSystemStore(t *testing.T) {
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
 
-		store := FileSystemPlayerStore{database}
+		store := FileSystemPlayerStore{
+			Database: json.NewEncoder(&common.Tape{File: database}),
+		}
 
 		store.RecordWin("Pepper")
 
