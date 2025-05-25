@@ -10,6 +10,17 @@ import (
 
 type FileSystemPlayerStore struct {
 	Database io.ReadWriteSeeker
+	league   common.League
+}
+
+func NewFileSystemPlayerStore(database io.ReadWriteSeeker) *FileSystemPlayerStore {
+	database.Seek(0, io.SeekStart)
+	league, _ := common.NewLeague(database)
+
+	return &FileSystemPlayerStore{
+		Database: database,
+		league:   league,
+	}
 }
 
 func (f *FileSystemPlayerStore) GetLeague() common.League {
