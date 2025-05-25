@@ -4,11 +4,13 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
+	"github.com/LPvdT/go-with-tests/application/common"
 	"github.com/LPvdT/go-with-tests/application/internal/filesystem"
 	"github.com/LPvdT/go-with-tests/application/server"
 )
@@ -26,7 +28,10 @@ func main() {
 		log.Fatalf("problem opening %s %v", dbFileName, err)
 	}
 
-	store := &filesystem.FileSystemPlayerStore{Database: db}
+	store := &filesystem.FileSystemPlayerStore{
+		Database: json.NewEncoder(&common.Tape{File: db}),
+	}
+
 	server := server.NewPlayerServer(store)
 
 	log.Printf("Starting server on http://%s", serverAddress)
