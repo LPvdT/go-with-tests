@@ -6,11 +6,16 @@ import (
 	"testing"
 
 	"github.com/LPvdT/go-with-tests/application/common"
-	"github.com/LPvdT/go-with-tests/application/store"
+	"github.com/LPvdT/go-with-tests/application/internal/filesystem"
 )
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	store := store.NewInMemoryPlayerStore()
+	database, cleanDatabase := common.CreateTempFile(t, "")
+	defer cleanDatabase()
+
+	store := &filesystem.FileSystemPlayerStore{
+		Database: database,
+	}
 	server := NewPlayerServer(store)
 	player := "Pepper"
 
