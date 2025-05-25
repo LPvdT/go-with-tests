@@ -15,12 +15,14 @@ func TestFileSystemStore(t *testing.T) {
 		]`)
 		store := FileSystemPlayerStore{database}
 
-		got := store.GetLeague()
+		got_1 := store.GetLeague()
+		got_2 := store.GetLeague()
 
 		want := []common.Player{
 			{Name: "Cleo", Wins: 10},
 			{Name: "Chris", Wins: 33},
 		}
-		common.AssertLeague(t, got, want)
+		common.AssertLeague(t, got_1, want)
+		common.AssertLeague(t, got_2, want)
 	})
 }
