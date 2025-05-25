@@ -1,7 +1,9 @@
 package filesystem
 
 import (
+	"encoding/json"
 	"io"
+	"log"
 
 	"github.com/LPvdT/go-with-tests/application/common"
 )
@@ -11,5 +13,9 @@ type FileSystemPlayerStore struct {
 }
 
 func (f *FileSystemPlayerStore) GetLeague() []common.Player {
-	return nil
+	var league []common.Player
+	if err := json.NewDecoder(f.database).Decode(&league); err != nil {
+		log.Fatalf("Could not decode league from file system: %v", err)
+	}
+	return league
 }
