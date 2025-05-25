@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -44,6 +45,15 @@ func AssertLeague(t testing.TB, got, want []Player) {
 func NewLeagueRequest() *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, "/league", nil)
 	return req
+}
+
+func GetLeagueFromResponse(t testing.TB, body io.Reader) (league []Player) {
+	t.Helper()
+	err := json.NewDecoder(body).Decode(&league)
+	if err != nil {
+		t.Fatalf("Unable to parse response from server %q into slice of Player, '%v'", body, err)
+	}
+	return
 }
 
 func AssertContentType(t testing.TB, response *httptest.ResponseRecorder, want string) {
