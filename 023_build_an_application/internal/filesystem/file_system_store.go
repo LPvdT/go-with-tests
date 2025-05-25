@@ -9,7 +9,7 @@ import (
 )
 
 type FileSystemPlayerStore struct {
-	Database io.ReadWriteSeeker
+	Database io.Writer
 	league   common.League
 }
 
@@ -18,7 +18,7 @@ func NewFileSystemPlayerStore(database io.ReadWriteSeeker) *FileSystemPlayerStor
 	league, _ := common.NewLeague(database)
 
 	return &FileSystemPlayerStore{
-		Database: database,
+		Database: &common.Tape{File: database},
 		league:   league,
 	}
 }
