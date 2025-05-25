@@ -24,16 +24,11 @@ func NewFileSystemPlayerStore(database io.ReadWriteSeeker) *FileSystemPlayerStor
 }
 
 func (f *FileSystemPlayerStore) GetLeague() common.League {
-	// Reset the reader to the start of the file
-	if _, err := f.Database.Seek(0, io.SeekStart); err != nil {
-		log.Fatalf("could not seek to start of database: %v", err)
-	}
-	league, _ := common.NewLeague(f.Database)
-	return league
+	return f.league
 }
 
 func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
-	player := f.GetLeague().Find(name)
+	player := f.league.Find(name)
 
 	if player != nil {
 		return player.Wins
@@ -43,13 +38,12 @@ func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
 }
 
 func (f *FileSystemPlayerStore) RecordWin(name string) {
-	league := f.GetLeague()
-	player := league.Find(name)
+	player := f.league.Find(name)
 
 	if player != nil {
 		player.Wins++
 	} else {
-		league = append(league, common.Player{
+		f.league = append(f.league, common.Player{
 			Name: name,
 			Wins: 1,
 		})
@@ -61,7 +55,7 @@ func (f *FileSystemPlayerStore) RecordWin(name string) {
 	}
 
 	// Write the updated league back to the file
-	if err := json.NewEncoder(f.Database).Encode(league); err != nil {
+	if err := json.NewEncoder(f.Database).Encode(f.league); err != nil {
 		log.Fatalf("could not write to database: %v", err)
 	}
 }
