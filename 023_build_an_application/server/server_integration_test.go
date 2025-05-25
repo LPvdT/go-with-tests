@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,8 +15,9 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	defer cleanDatabase()
 
 	store := &filesystem.FileSystemPlayerStore{
-		Database: database,
+		Database: json.NewEncoder(&common.Tape{File: database}),
 	}
+
 	server := NewPlayerServer(store)
 	player := "Pepper"
 
