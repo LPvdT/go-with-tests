@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/LPvdT/go-with-tests/application/common"
+	"github.com/LPvdT/go-with-tests/application/internal/common"
 )
 
 type FileSystemPlayerStore struct {

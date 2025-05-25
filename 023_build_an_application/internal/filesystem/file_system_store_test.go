@@ -3,7 +3,7 @@ package filesystem
 import (
 	"testing"
 
-	"github.com/LPvdT/go-with-tests/application/common"
+	"github.com/LPvdT/go-with-tests/application/internal/common"
 )
 
 func TestFileSystemStore(t *testing.T) {
