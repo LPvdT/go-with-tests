@@ -1,7 +1,6 @@
 // Continue here: https://quii.gitbook.io/learn-go-with-tests/build-an-application/io#didnt-we-just-break-some-rules-there-testing-private-things-no-interfaces
-// Repository: https://github.com/LPvdT/go-with-tests/tree/feature/json-routing-embedding
 
-// TODO: Fix TestFileSystemStore tests
+// Repository: https://github.com/LPvdT/go-with-tests/tree/feature/json-routing-embedding
 
 package main
 
