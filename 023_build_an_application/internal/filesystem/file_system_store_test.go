@@ -1,7 +1,6 @@
 package filesystem
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/LPvdT/go-with-tests/application/common"
@@ -9,32 +8,38 @@ import (
 
 func TestFileSystemStore(t *testing.T) {
 	t.Run("league from a reader", func(t *testing.T) {
-		database := strings.NewReader(`[
+		database, cleanDatabase := common.CreateTempFile(t, `[
 			{"Name": "Cleo", "Wins": 10},
 			{"Name": "Chris", "Wins": 33}
 		]`)
+		defer cleanDatabase()
+
 		store := FileSystemPlayerStore{database}
 
-		got_1 := store.GetLeague()
-		got_2 := store.GetLeague()
-
+		got := store.GetLeague()
 		want := []common.Player{
 			{Name: "Cleo", Wins: 10},
 			{Name: "Chris", Wins: 33},
 		}
-		common.AssertLeague(t, got_1, want)
-		common.AssertLeague(t, got_2, want)
+
+		common.AssertLeague(t, got, want)
+
+		// Read the file again
+		got = store.GetLeague()
+		common.AssertLeague(t, got, want)
 	})
 
 	t.Run("get player score", func(t *testing.T) {
-		database := strings.NewReader(`[
-		{"Name": "Cleo", "Wins": 10},
-		{"Name": "Chris", "Wins": 33}]`)
+		database, cleanDatabase := common.CreateTempFile(t, `[
+			{"Name": "Cleo", "Wins": 10},
+			{"Name": "Chris", "Wins": 33}]`)
+		defer cleanDatabase()
 
 		store := FileSystemPlayerStore{database}
 
 		got := store.GetPlayerScore("Chris")
 		want := 33
+
 		common.AssertScoreEquals(t, got, want)
 	})
 }
