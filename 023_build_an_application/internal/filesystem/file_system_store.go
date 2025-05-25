@@ -19,3 +19,7 @@ func (f *FileSystemPlayerStore) GetLeague() []common.Player {
 	league, _ := common.NewLeague(f.database)
 	return league
 }
+
+func (f *FileSystemPlayerStore) GetPlayerScore(name string) int {
+	return 0
+}
