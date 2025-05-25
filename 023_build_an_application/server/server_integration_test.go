@@ -32,7 +32,7 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 
 		common.AssertStatus(t, response.Code, http.StatusOK)
 
-		got := getLeagueFromResponse(t, response.Body)
+		got := common.GetLeagueFromResponse(t, response.Body)
 		want := []common.Player{
 			{Name: "Pepper", Wins: 3},
 		}
