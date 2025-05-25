@@ -1,8 +1,6 @@
 package server
 
 import (
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,7 +23,7 @@ func (s *StubPlayerStore) RecordWin(name string) {
 	s.winCalls = append(s.winCalls, name)
 }
 
-func (s *StubPlayerStore) GetLeague() []common.Player {
+func (s *StubPlayerStore) GetLeague() common.League {
 	return s.league
 }
 
@@ -99,7 +97,7 @@ func TestStoreWins(t *testing.T) {
 }
 
 func TestLeague(t *testing.T) {
-	t.Run("it returns 200 on /league", func(t *testing.T) {
+	t.Run("it returns the league table as JSON", func(t *testing.T) {
 		wantedLeague := []common.Player{
 			{Name: "Cleo", Wins: 32},
 			{Name: "Chris", Wins: 20},
@@ -114,19 +112,10 @@ func TestLeague(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		got := getLeagueFromResponse(t, response.Body)
+		got := common.GetLeagueFromResponse(t, response.Body)
 
 		common.AssertStatus(t, response.Code, http.StatusOK)
 		common.AssertLeague(t, got, wantedLeague)
 		common.AssertContentType(t, response, jsonContentType)
 	})
-}
-
-func getLeagueFromResponse(t testing.TB, body io.Reader) (league []common.Player) {
-	t.Helper()
-	err := json.NewDecoder(body).Decode(&league)
-	if err != nil {
-		t.Fatalf("Unable to parse response from server %q into slice of Player, '%v'", body, err)
-	}
-	return
 }
