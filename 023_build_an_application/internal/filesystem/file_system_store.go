@@ -4,21 +4,26 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"os"
 
 	"github.com/LPvdT/go-with-tests/application/common"
 )
 
 type FileSystemPlayerStore struct {
-	Database io.Writer
+	Database *json.Encoder
 	league   common.League
 }
 
-func NewFileSystemPlayerStore(database io.ReadWriteSeeker) *FileSystemPlayerStore {
-	database.Seek(0, io.SeekStart)
-	league, _ := common.NewLeague(database)
+func NewFileSystemPlayerStore(file *os.File) *FileSystemPlayerStore {
+	_, err := file.Seek(0, io.SeekStart)
+	if err != nil {
+		log.Fatalf("could not seek to start of file: %v", err)
+	}
+
+	league, _ := common.NewLeague(file)
 
 	return &FileSystemPlayerStore{
-		Database: &common.Tape{File: database},
+		Database: json.NewEncoder(&common.Tape{File: file}),
 		league:   league,
 	}
 }
@@ -49,13 +54,8 @@ func (f *FileSystemPlayerStore) RecordWin(name string) {
 		})
 	}
 
-	// Reset the reader to the start of the file
-	if _, err := f.Database.Seek(0, io.SeekStart); err != nil {
-		log.Fatalf("could not seek to start of database: %v", err)
-	}
-
-	// Write the updated league back to the file
-	if err := json.NewEncoder(f.Database).Encode(f.league); err != nil {
-		log.Fatalf("could not write to database: %v", err)
+	err := f.Database.Encode(f.league)
+	if err != nil {
+		log.Fatalf("could not encode league to file: %v", err)
 	}
 }
