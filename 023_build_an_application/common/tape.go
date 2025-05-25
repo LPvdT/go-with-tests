@@ -2,16 +2,21 @@ package common
 
 import (
 	"io"
-	"log"
+	"os"
 )
 
 type Tape struct {
-	File io.ReadWriteSeeker
+	File *os.File
 }
 
 func (t *Tape) Write(p []byte) (n int, err error) {
-	if _, err := t.File.Seek(0, io.SeekEnd); err != nil {
-		log.Fatalf("could not seek to end of file: %v", err)
+	if err := t.File.Truncate(0); err != nil {
+		return 0, err
 	}
+
+	if _, err := t.File.Seek(0, io.SeekStart); err != nil {
+		return 0, err
+	}
+
 	return t.File.Write(p)
 }
