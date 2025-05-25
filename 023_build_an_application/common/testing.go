@@ -50,3 +50,10 @@ func AssertContentType(t testing.TB, response *httptest.ResponseRecorder, want s
 		t.Errorf("response did not have content-type of %s, got %v", want, response.Result().Header)
 	}
 }
+
+func AssertScoreEquals(t testing.TB, got, want int) {
+	t.Helper()
+	if got != want {
+		t.Errorf("got %d want %d", got, want)
+	}
+}
