@@ -21,7 +21,7 @@ var (
 	serverAddress string = strings.Join([]string{"localhost", port}, ":")
 )
 
-const dbFileName = "game.db.json"
+const dbFileName string = "game.db.json"
 
 func main() {
 	db, err := os.OpenFile(dbFileName, os.O_RDWR|os.O_CREATE, 0o666)
