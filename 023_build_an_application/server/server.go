@@ -60,15 +60,14 @@ func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPlayerScore(name string) string {
-	if name == "Pepper" {
+	switch name {
+	case "Pepper":
 		return "20"
-	}
-
-	if name == "Floyd" {
+	case "Floyd":
 		return "10"
+	default:
+		return ""
 	}
-
-	return ""
 }
 
 func (p *PlayerServer) showScore(w http.ResponseWriter, player string) {
