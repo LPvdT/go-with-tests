@@ -40,6 +40,7 @@ func NewPlayerServer(store PlayerStore) *PlayerServer {
 	return p
 }
 
+// leagueHandler responds to GET requests to "/league" with the current league.
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", jsonContentType)
 
@@ -48,6 +49,8 @@ func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// playersHandler handles requests to "/players/{name}".
+// It processes wins for players or retrieves their scores.
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
 	player := strings.TrimPrefix(r.URL.Path, "/players/")
 
@@ -59,6 +62,8 @@ func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetPlayerScore returns the score for a given player, or an empty string if the
+// player is unknown.
 func GetPlayerScore(name string) string {
 	switch name {
 	case "Pepper":
@@ -70,6 +75,8 @@ func GetPlayerScore(name string) string {
 	}
 }
 
+// showScore writes the score of the specified player to the response writer.
+// If the player's score is not found, it responds with a 404 status code.
 func (p *PlayerServer) showScore(w http.ResponseWriter, player string) {
 	score := p.store.GetPlayerScore(player)
 
@@ -81,6 +88,7 @@ func (p *PlayerServer) showScore(w http.ResponseWriter, player string) {
 	fmt.Fprint(w, score)
 }
 
+// processWin records a win for a player and returns a 202 Accepted status code
 func (p *PlayerServer) processWin(w http.ResponseWriter, player string) {
 	p.store.RecordWin(player)
 	w.WriteHeader(http.StatusAccepted)
