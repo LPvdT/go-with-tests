@@ -24,17 +24,21 @@ var (
 const dbFileName string = "game.db.json"
 
 func main() {
+	// Open the database file with read and write permissions, creating it if it doesn't exist.
 	db, err := os.OpenFile(dbFileName, os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
 		log.Fatalf("problem opening %s %v", dbFileName, err)
 	}
 
+	// Create a new file system player store with the database.
 	store := &filesystem.FileSystemPlayerStore{
 		Database: json.NewEncoder(&common.Tape{File: db}),
 	}
 
+	// Initialize the player server with the player store.
 	server := server.NewPlayerServer(store)
 
+	// Log the server address and start listening for HTTP requests.
 	log.Printf("Starting server on http://%s", serverAddress)
 	if err := http.ListenAndServe(serverAddress, server); err != nil {
 		log.Fatalf("Could not start server: %v", err)
