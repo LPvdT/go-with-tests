@@ -18,7 +18,8 @@ import (
 
 var (
 	port          string = "5000"
-	serverAddress string = strings.Join([]string{"localhost", port}, ":")
+	address       string = "localhost"
+	serverAddress string = strings.Join([]string{address, port}, ":")
 )
 
 const dbFileName string = "game.db.json"
