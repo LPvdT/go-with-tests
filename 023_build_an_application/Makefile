@@ -84,7 +84,7 @@ test:
 	go test -v -race -buildvcs=true ./...
 
 ## test/cover: run all tests and display coverage
-.PHONY: test/coverage
+.PHONY: test/cover
 test/cover: coverage
 	go test -v -race -buildvcs=true -coverprofile=${OUTPUT_DIR}/coverage/coverage.out ./...
 	go tool cover -html=${OUTPUT_DIR}/coverage/coverage.out -o ${OUTPUT_DIR}/coverage/coverage.html
