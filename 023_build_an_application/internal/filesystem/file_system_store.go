@@ -1,3 +1,4 @@
+// Package filesystem provides a file system implementation of the PlayerStore interface.
 package filesystem
 
 import (

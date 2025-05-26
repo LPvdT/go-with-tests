@@ -1,3 +1,4 @@
+// Package server provides a HTTP interface for player information.
 package server
 
 import (
