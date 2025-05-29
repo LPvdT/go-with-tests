@@ -10,12 +10,12 @@ import (
 
 func TestGETPlayers(t *testing.T) {
 	store := common.StubPlayerStore{
-		map[string]int{
+		Scores: map[string]int{
 			"Pepper": 20,
 			"Floyd":  10,
 		},
-		nil,
-		nil,
+		WinCalls: nil,
+		League:   nil,
 	}
 	server := NewPlayerServer(&store)
 
@@ -51,9 +51,9 @@ func TestGETPlayers(t *testing.T) {
 
 func TestStoreWins(t *testing.T) {
 	store := common.StubPlayerStore{
-		map[string]int{},
-		nil,
-		nil,
+		Scores:   map[string]int{},
+		WinCalls: nil,
+		League:   nil,
 	}
 	server := NewPlayerServer(&store)
 
@@ -85,7 +85,9 @@ func TestLeague(t *testing.T) {
 			{Name: "Tiest", Wins: 14},
 		}
 
-		store := common.StubPlayerStore{nil, nil, wantedLeague}
+		store := common.StubPlayerStore{
+			Scores: nil, WinCalls: nil, League: wantedLeague,
+		}
 		server := NewPlayerServer(&store)
 
 		request := common.NewLeagueRequest()
