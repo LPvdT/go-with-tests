@@ -21,24 +21,9 @@ type FileSystemPlayerStore struct {
 // The file is expected to be a JSON file containing the current league.
 // The file is read when the store is created and written to when the store is updated.
 func NewFileSystemPlayerStore(file *os.File) (*FileSystemPlayerStore, error) {
-	_, err := file.Seek(0, io.SeekStart)
+	err := initialisePlayerDBFile(file)
 	if err != nil {
-		log.Fatalf("could not seek to start of file: %v", err)
-	}
-
-	info, err := file.Stat()
-	if err != nil {
-		return nil, fmt.Errorf("problem getting file info from file %s, %v", file.Name(), err)
-	}
-
-	if info.Size() == 0 {
-		if _, err := file.Write([]byte("[]")); err != nil {
-			return nil, fmt.Errorf("problem writing initial data to file %s, %v", file.Name(), err)
-		}
-
-		if _, err := file.Seek(0, io.SeekStart); err != nil {
-			return nil, fmt.Errorf("problem seeking to start of file %s after writing initial data, %v", file.Name(), err)
-		}
+		return nil, fmt.Errorf("problem initialising player db file, %v", err)
 	}
 
 	league, err := common.NewLeague(file)
@@ -50,6 +35,30 @@ func NewFileSystemPlayerStore(file *os.File) (*FileSystemPlayerStore, error) {
 		Database: json.NewEncoder(&common.Tape{File: file}),
 		league:   league,
 	}, nil
+}
+
+func initialisePlayerDBFile(file *os.File) error {
+	_, err := file.Seek(0, io.SeekStart)
+	if err != nil {
+		log.Fatalf("could not seek to start of file: %v", err)
+	}
+
+	info, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("problem getting file info from file %s, %v", file.Name(), err)
+	}
+
+	if info.Size() == 0 {
+		if _, err := file.Write([]byte("[]")); err != nil {
+			return fmt.Errorf("problem writing initial data to file %s, %v", file.Name(), err)
+		}
+
+		if _, err := file.Seek(0, io.SeekStart); err != nil {
+			return fmt.Errorf("problem seeking to start of file %s after writing initial data, %v", file.Name(), err)
+		}
+	}
+
+	return nil
 }
 
 // GetLeague retrieves the current league state from the file.
