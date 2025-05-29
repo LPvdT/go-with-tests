@@ -31,4 +31,5 @@ go.work.sum
 *.db*
 
 # Miscellaneous
+.task/
 todo.md
