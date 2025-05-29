@@ -26,6 +26,21 @@ func NewFileSystemPlayerStore(file *os.File) (*FileSystemPlayerStore, error) {
 		log.Fatalf("could not seek to start of file: %v", err)
 	}
 
+	info, err := file.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("problem getting file info from file %s, %v", file.Name(), err)
+	}
+
+	if info.Size() == 0 {
+		if _, err := file.Write([]byte("[]")); err != nil {
+			return nil, fmt.Errorf("problem writing initial data to file %s, %v", file.Name(), err)
+		}
+
+		if _, err := file.Seek(0, io.SeekStart); err != nil {
+			return nil, fmt.Errorf("problem seeking to start of file %s after writing initial data, %v", file.Name(), err)
+		}
+	}
+
 	league, err := common.NewLeague(file)
 	if err != nil {
 		return nil, fmt.Errorf("problem loading league from file %s, %v", file.Name(), err)
