@@ -3,6 +3,7 @@ package filesystem
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -19,18 +20,21 @@ type FileSystemPlayerStore struct {
 //
 // The file is expected to be a JSON file containing the current league.
 // The file is read when the store is created and written to when the store is updated.
-func NewFileSystemPlayerStore(file *os.File) *FileSystemPlayerStore {
+func NewFileSystemPlayerStore(file *os.File) (*FileSystemPlayerStore, error) {
 	_, err := file.Seek(0, io.SeekStart)
 	if err != nil {
 		log.Fatalf("could not seek to start of file: %v", err)
 	}
 
-	league, _ := common.NewLeague(file)
+	league, err := common.NewLeague(file)
+	if err != nil {
+		return nil, fmt.Errorf("problem loading league from file %s, %v", file.Name(), err)
+	}
 
 	return &FileSystemPlayerStore{
 		Database: json.NewEncoder(&common.Tape{File: file}),
 		league:   league,
-	}
+	}, nil
 }
 
 // GetLeague retrieves the current league state from the file.
