@@ -11,7 +11,7 @@ import (
 )
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	database, cleanDatabase := common.CreateTempFile(t, "")
+	database, cleanDatabase := common.CreateTempFile(t, `[]`)
 	defer cleanDatabase()
 
 	store := &filesystem.FileSystemPlayerStore{
