@@ -5,7 +5,7 @@
 # ==================================================================================== #
 
 # Sets the path to the main package, binary name, and output directory
-MAIN_PACKAGE_PATH := .
+MAIN_PACKAGE_PATH := ./cmd/webserver
 BINARY_NAME := http-server
 OUTPUT_DIR := .
 
