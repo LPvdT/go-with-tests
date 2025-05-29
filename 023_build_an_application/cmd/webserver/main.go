@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/LPvdT/go-with-tests/application/internal/filesystem"
-	"github.com/LPvdT/go-with-tests/application/server"
+	"github.com/LPvdT/go-with-tests/application/internal/server"
 )
 
 var (
