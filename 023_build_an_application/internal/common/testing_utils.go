@@ -114,3 +114,13 @@ func CreateTempFile(t testing.TB, initialData string) (*os.File, func()) {
 
 	return tmpfile, removeFile
 }
+
+// AssertNoError checks that the error is nil. If not, it reports a fatal error
+// with the details. This function is a test helper, so it should be used within
+// a test context.
+func AssertNoError(t testing.TB, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatalf("got an error but didn't want one: %v", err)
+	}
+}
