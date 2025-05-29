@@ -44,7 +44,14 @@ MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(b
 help:
 	@echo 'Usage:'
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
-	
+
+## tree: display the directory tree of the project
+.PHONY: tree
+tree:
+	@echo "[+] Generating directory tree..."
+	@mkdir -p ${OUTPUT_DIR}/tree
+	tree -an --gitignore --dirsfirst --gitignore > ${OUTPUT_DIR}/tree/tree.txt
+
 # ==================================================================================== #
 # DEVELOPMENT
 # ==================================================================================== #
@@ -69,7 +76,7 @@ run:
 audit:
 	go mod tidy -diff
 	go mod verify
-	test -z "$(shell gofumpt -l .)" 
+	test -z "$(shell gofumpt -l .)"
 	go vet ./...
 	go run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
 	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
@@ -143,7 +150,7 @@ build: no-dirty audit test
 	GOOS=${OS} GOARCH=${ARCH} go build -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE}
 
 ## production/pack: [operations] pack (compress) the application for production
-.PHONY: production/pack 
+.PHONY: production/pack
 .DELETE_ON_ERROR:
 production/pack: no-dirty clean audit
 	@echo "[+] - [${OS}/${ARCH}] - Packing ${BINARY_NAME} (${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE})..."
