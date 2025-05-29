@@ -4,9 +4,11 @@
 # PACKAGE CONFIGURATION
 # ==================================================================================== #
 
-# Sets the path to the main package, binary name, and output directory
+# Sets the path to the main package and the main Go file
 MAIN_PACKAGE_PATH := cmd/webserver
 MAIN_GO_FILE := main.go
+
+# Sets the binary name and output directory
 BINARY_NAME := http-server
 OUTPUT_DIR := dist
 
@@ -28,21 +30,10 @@ ARCH_LIST := amd64 arm64
 # ===================================================================================== #
 
 # Create a list of all possible OS/ARCH combinations
-MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST),$(foreach arch,$(ARCH_LIST),$(BINARY_NAME)_$(os)_$(arch)))
+MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST),$(foreach arch,$(ARCH_LIST),$(BINARY_NAME)_$(os)_$(arch)$(if $(filter $(os),windows),.exe)))
 
 # Create the full paths for the binaries
 MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(binary))
-
-# Change the binary name depending on the OS
-ifeq "$(OS)" "windows"
-	BINARY_NAME := ${BINARY_NAME}_${OS}_${ARCH}.exe
-endif
-ifeq "$(OS)" "darwin"
-	BINARY_NAME := ${BINARY_NAME}_${OS}_${ARCH}
-endif
-ifeq "$(OS)" "linux"
-	BINARY_NAME := ${BINARY_NAME}_${OS}_${ARCH}
-endif
 
 # ==================================================================================== #
 # ENTRYPOINT
@@ -67,7 +58,7 @@ tidy:
 ## run: [development] run the application
 .PHONY: run
 run:
-	GOOS=${OS} GOARCH=${ARCH} go run ${MAIN_PACKAGE_PATH}
+	GOOS=${OS} GOARCH=${ARCH} go run ${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE}
 
 # ==================================================================================== #
 # QUALITY CONTROL
@@ -90,7 +81,8 @@ test:
 
 ## test/cover: [quality-control] run all tests and display coverage
 .PHONY: test/cover
-test/cover: coverage
+test/cover: coverage clean-test-cache
+	@mkdir -p ${OUTPUT_DIR}/coverage
 	go test -v -race -buildvcs=true -coverprofile=${OUTPUT_DIR}/coverage/coverage.out ./...
 	go tool cover -html=${OUTPUT_DIR}/coverage/coverage.out -o ${OUTPUT_DIR}/coverage/coverage.html
 
@@ -107,31 +99,25 @@ upgradeable:
 .PHONY: no-dirty
 no-dirty:
 	@if [ -n "$(shell git status --porcelain)" ]; then \
-		echo "Error: Working directory is not clean. Please commit or stash your changes."; \
+		echo "[+] Error: Working directory is not clean. Please commit or stash your changes."; \
 		exit 1; \
 	fi
 
 # coverage: [helper] create a directory for coverage reports
 .PHONY: coverage
 coverage:
-	mkdir -p $@
+	@mkdir -p ${OUTPUT_DIR}/$@
 
-# clean-cache: [helper] remove all cached files
-.PHONY: clean-cache
-clean-cache:
-	@echo "Cleaning up cached files..."
-	@go clean -cache -testcache -modcache
-
-## build: [helper] build the application
-.PHONY: build
-build: clean
-	@echo "> [${OS}/${ARCH}] - Building ${BINARY_NAME} (${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE})..."
-	GOOS=${OS} GOARCH=${ARCH} go build -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE}
+# clean-test-cache: [helper] remove all test cache files
+.PHONY: clean-test-cache
+clean-test-cache:
+	@echo "[+] Cleaning up test cache files..."
+	@go clean -testcache
 
 ## clean: [helper] remove all build artifacts
 .PHONY: clean
 clean:
-	@echo "Cleaning up build artifacts..."
+	@echo "[+] Cleaning up build artifacts..."
 	@rm -rf ${OUTPUT_DIR}
 	@rm -rf coverage
 	@rm -rf *.db*
@@ -140,25 +126,41 @@ clean:
 # OPERATIONS
 # ==================================================================================== #
 
-## build/matrix: [operations] build the application for all OS/ARCH combinations
-.PHONY: build/matrix
-build/matrix: $(MATRIX_BINARY_PATHS)
-$(OUTPUT_DIR)/%:
-	$(MAKE) build OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
+## build: [operations] build the application
+.PHONY: build
+.DELETE_ON_ERROR:
+build: no-dirty audit test
+	@if [ "${OS}" = "windows" ]; then \
+		BINARY_NAME="${BINARY_NAME}_${OS}_${ARCH}.exe"; \
+	elif [ "${OS}" = "darwin" ]; then \
+		BINARY_NAME="${BINARY_NAME}_${OS}_${ARCH}"; \
+	else \
+		BINARY_NAME="${BINARY_NAME}_${OS}_${ARCH}"; \
+	fi
+
+	@echo "[+] - [${OS}/${ARCH}] - Building ${BINARY_NAME} (${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE})..."
+
+	GOOS=${OS} GOARCH=${ARCH} go build -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE}
 
 ## production/pack: [operations] pack (compress) the application for production
 .PHONY: production/pack 
-production/pack: audit no-dirty clean-cache
-	GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE}
+.DELETE_ON_ERROR:
+production/pack: no-dirty clean audit
+	@echo "[+] - [${OS}/${ARCH}] - Packing ${BINARY_NAME} (${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE})..."
+
+	@GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${OUTPUT_DIR}/bin/${BINARY_NAME}$(if $(filter $(OS),windows),.exe) ${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE}
 
 	@if [ "${OS}" = "darwin" ]; then \
-		upx --best --lzma --force-macos ${OUTPUT_DIR}/bin/${BINARY_NAME} || (echo "> \033[31m\033[1mUPX failed for ${OS}/${ARCH}, skipping...\033[0m"; true); \
+		upx --best --lzma --force-macos ${OUTPUT_DIR}/bin/${BINARY_NAME}$(if $(filter $(OS),windows),.exe) || (echo "[*] \033[31m\033[1mUPX failed for ${OS}/${ARCH}, skipping...\033[0m"; true); \
 	else \
-		upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME} || (echo "> \033[31m\033[1mUPX failed for ${OS}/${ARCH}, skipping...\033[0m"; true); \
+		upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME}$(if $(filter $(OS),windows),.exe) || (echo "[*] \033[31m\033[1mUPX failed for ${OS}/${ARCH}, skipping...\033[0m"; true); \
 	fi
 
 ## production/pack/matrix: [operations] pack (compress) the application for production for all OS/ARCH combinations
 .PHONY: production/pack/matrix
-production/pack/matrix: $(MATRIX_BINARY_PATHS)
+.DELETE_ON_ERROR:
+production/pack/matrix: $(MATRIX_BINARY_PATHS) test
 $(OUTPUT_DIR)/%:
-	@$(MAKE) production/pack OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(notdir $@)))
+	@echo "[+] - [$(word 2,$(subst _, ,$(notdir $@)))/$(word 3,$(subst _, ,$(basename $(notdir $@))))] - Packing $(BINARY_NAME) ($(MAIN_PACKAGE_PATH)/$(MAIN_GO_FILE))..."
+
+	@$(MAKE) production/pack OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(basename $(notdir $@))))
