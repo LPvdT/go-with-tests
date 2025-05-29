@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -64,6 +65,19 @@ func NewPostWinRequest(name string) *http.Request {
 // It is useful for asserting that the actual league data matches the expected data in tests.
 func AssertLeague(t testing.TB, got, want []Player) {
 	t.Helper()
+
+	// The league slice (which is written by hand in the test) needs
+	// to be sorted by name.
+	sort.Slice(got, func(i, j int) bool {
+		return got[i].Name < got[j].Name
+	})
+
+	// The expected league slice (which is written by hand in the test) needs
+	// to be sorted by name too.
+	sort.Slice(want, func(i, j int) bool {
+		return want[i].Name < want[j].Name
+	})
+
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v want %v", got, want)
 	}
