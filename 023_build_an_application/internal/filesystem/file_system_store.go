@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 
 	"github.com/LPvdT/go-with-tests/application/internal/common"
 )
@@ -63,6 +64,9 @@ func initialisePlayerDBFile(file *os.File) error {
 
 // GetLeague retrieves the current league state from the file.
 func (f *FileSystemPlayerStore) GetLeague() common.League {
+	sort.Slice(f.league, func(i, j int) bool {
+		return f.league[i].Wins > f.league[j].Wins
+	})
 	return f.league
 }
 
