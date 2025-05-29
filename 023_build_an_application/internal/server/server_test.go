@@ -9,7 +9,7 @@ import (
 )
 
 func TestGETPlayers(t *testing.T) {
-	store := StubPlayerStore{
+	store := common.StubPlayerStore{
 		map[string]int{
 			"Pepper": 20,
 			"Floyd":  10,
@@ -50,7 +50,7 @@ func TestGETPlayers(t *testing.T) {
 }
 
 func TestStoreWins(t *testing.T) {
-	store := StubPlayerStore{
+	store := common.StubPlayerStore{
 		map[string]int{},
 		nil,
 		nil,
@@ -67,12 +67,12 @@ func TestStoreWins(t *testing.T) {
 
 		common.AssertStatus(t, response.Code, http.StatusAccepted)
 
-		if len(store.winCalls) != 1 {
-			t.Fatalf("got %d calls to RecordWin want %d", len(store.winCalls), 1)
+		if len(store.WinCalls) != 1 {
+			t.Fatalf("got %d calls to RecordWin want %d", len(store.WinCalls), 1)
 		}
 
-		if store.winCalls[0] != player {
-			t.Errorf("did not store correct winner got %q want %q", store.winCalls[0], player)
+		if store.WinCalls[0] != player {
+			t.Errorf("did not store correct winner got %q want %q", store.WinCalls[0], player)
 		}
 	})
 }
@@ -85,7 +85,7 @@ func TestLeague(t *testing.T) {
 			{Name: "Tiest", Wins: 14},
 		}
 
-		store := StubPlayerStore{nil, nil, wantedLeague}
+		store := common.StubPlayerStore{nil, nil, wantedLeague}
 		server := NewPlayerServer(&store)
 
 		request := common.NewLeagueRequest()
@@ -99,23 +99,4 @@ func TestLeague(t *testing.T) {
 		common.AssertLeague(t, got, wantedLeague)
 		common.AssertContentType(t, response, jsonContentType)
 	})
-}
-
-type StubPlayerStore struct {
-	scores   map[string]int
-	winCalls []string
-	league   []common.Player
-}
-
-func (s *StubPlayerStore) GetPlayerScore(name string) int {
-	score := s.scores[name]
-	return score
-}
-
-func (s *StubPlayerStore) RecordWin(name string) {
-	s.winCalls = append(s.winCalls, name)
-}
-
-func (s *StubPlayerStore) GetLeague() common.League {
-	return s.league
 }
