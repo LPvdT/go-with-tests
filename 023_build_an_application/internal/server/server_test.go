@@ -8,25 +8,6 @@ import (
 	"github.com/LPvdT/go-with-tests/application/internal/common"
 )
 
-type StubPlayerStore struct {
-	scores   map[string]int
-	winCalls []string
-	league   []common.Player
-}
-
-func (s *StubPlayerStore) GetPlayerScore(name string) int {
-	score := s.scores[name]
-	return score
-}
-
-func (s *StubPlayerStore) RecordWin(name string) {
-	s.winCalls = append(s.winCalls, name)
-}
-
-func (s *StubPlayerStore) GetLeague() common.League {
-	return s.league
-}
-
 func TestGETPlayers(t *testing.T) {
 	store := StubPlayerStore{
 		map[string]int{
@@ -118,4 +99,23 @@ func TestLeague(t *testing.T) {
 		common.AssertLeague(t, got, wantedLeague)
 		common.AssertContentType(t, response, jsonContentType)
 	})
+}
+
+type StubPlayerStore struct {
+	scores   map[string]int
+	winCalls []string
+	league   []common.Player
+}
+
+func (s *StubPlayerStore) GetPlayerScore(name string) int {
+	score := s.scores[name]
+	return score
+}
+
+func (s *StubPlayerStore) RecordWin(name string) {
+	s.winCalls = append(s.winCalls, name)
+}
+
+func (s *StubPlayerStore) GetLeague() common.League {
+	return s.league
 }
