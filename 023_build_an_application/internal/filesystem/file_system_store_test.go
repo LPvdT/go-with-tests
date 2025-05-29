@@ -14,7 +14,10 @@ func TestFileSystemStore(t *testing.T) {
 		]`)
 		defer cleanDatabase()
 
-		store := NewFileSystemPlayerStore(database)
+		store, err := NewFileSystemPlayerStore(database)
+		if err != nil {
+			t.Fatalf("problem creating file system player store, %v", err)
+		}
 
 		got := store.GetLeague()
 		want := []common.Player{
@@ -35,7 +38,10 @@ func TestFileSystemStore(t *testing.T) {
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
 
-		store := NewFileSystemPlayerStore(database)
+		store, err := NewFileSystemPlayerStore(database)
+		if err != nil {
+			t.Fatalf("problem creating file system player store, %v", err)
+		}
 
 		got := store.GetPlayerScore("Chris")
 		want := 33
@@ -49,8 +55,10 @@ func TestFileSystemStore(t *testing.T) {
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
 
-		store := NewFileSystemPlayerStore(database)
-
+		store, err := NewFileSystemPlayerStore(database)
+		if err != nil {
+			t.Fatalf("problem creating file system player store, %v", err)
+		}
 		store.RecordWin("Chris")
 
 		got := store.GetPlayerScore("Chris")
@@ -65,7 +73,10 @@ func TestFileSystemStore(t *testing.T) {
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
 
-		store := NewFileSystemPlayerStore(database)
+		store, err := NewFileSystemPlayerStore(database)
+		if err != nil {
+			t.Fatalf("problem creating file system player store, %v", err)
+		}
 
 		store.RecordWin("Pepper")
 
