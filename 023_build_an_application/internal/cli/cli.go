@@ -1,9 +1,14 @@
 package cli
 
-import "github.com/LPvdT/go-with-tests/application/internal/server"
+import (
+	"io"
+
+	"github.com/LPvdT/go-with-tests/application/internal/server"
+)
 
 type CLI struct {
 	PlayerStore server.PlayerStore
+	In          io.Reader
 }
 
 func (cli *CLI) PlayPoker() {
