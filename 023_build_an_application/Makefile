@@ -1,4 +1,7 @@
-# Config
+# Default goal
+.DEFAULT_GOAL := help
+
+## Config
 MAIN_GO_FILE := main.go
 OUTPUT_DIR := dist
 
@@ -26,8 +29,9 @@ MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(b
 # Detect extension
 EXT := $(if $(filter $(OS),windows),.exe)
 
-# Default goal
-.DEFAULT_GOAL := help
+# Pattern rule for matrix builds
+$(OUTPUT_DIR)/%:
+	$(call build_and_pack,$@)
 
 # build-and-pack: Internal helper function
 define build_and_pack
@@ -63,6 +67,11 @@ help: ## Show available make targets
 	@grep -E '^[a-zA-Z0-9_/.-]+:.*?## .+$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+.PHONY: clean
+clean: ## Clean up the output directory
+	@echo "[*] Cleaning up $(OUTPUT_DIR)"
+	@rm -rf $(OUTPUT_DIR)
+
 .PHONY: production/pack-webserver
 production/pack-webserver: ## Build and pack the webserver binary
 	@echo "[*] Building $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
@@ -81,8 +90,3 @@ production/pack-all: production/pack-webserver production/pack-cli ## Build and 
 .PHONY: production/pack/matrix
 .DELETE_ON_ERROR:
 production/pack/matrix: $(MATRIX_BINARY_PATHS) ## Cross-compile and pack all OS/ARCH combinations
-
-# Pattern rule for matrix builds
-$(OUTPUT_DIR)/%:
-	$(call build_and_pack,$@)
-
