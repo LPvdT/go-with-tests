@@ -1,0 +1,53 @@
+# https://taskfile.dev
+
+# This is just a Taskfile to check whether or not it would be suitable to
+# replace the Makefile.
+# It is in no way a replacement for the current Makefile, but when properly fleshed out it could be.
+
+version: '3'
+
+interval: 2s
+
+vars:
+  MAIN_PACKAGE_PATH: cmd/cli
+  MAIN_GO_FILE: main.go
+
+  OUTPUT_DIR: dist
+  BINARY_NAME: http-server
+
+tasks:
+  default:
+    cmd: task --list-all
+    desc: 'List all tasks'
+
+  go:build:
+    desc: Build the Go project
+    aliases: [build]
+    requires:
+      vars:
+        - MAIN_PACKAGE_PATH
+        - MAIN_GO_FILE
+        - OUTPUT_DIR
+        - BINARY_NAME
+    sources:
+      - '**/*.go'
+    generates:
+      - ./{{.OUTPUT_DIR}}/{{.BINARY_NAME}}
+    watch: true
+    cmds:
+      - cmd: echo "Building the project..."
+      - cmd: |
+          go build -o {{.OUTPUT_DIR}}/{{.BINARY_NAME}}
+          ./{{.MAIN_PACKAGE_PATH}}/{{.MAIN_GO_FILE}}
+        silent: false
+
+  go:run:
+    desc: Run the Go project
+    aliases: [run]
+    deps: [go:build]
+    requires:
+      vars: [BINARY_NAME]
+    silent: true
+    cmds:
+      - cmd: 'echo "Running: {{.OUTPUT_DIR}}/{{.BINARY_NAME}}"'
+      - cmd: ./{{.OUTPUT_DIR}}/{{.BINARY_NAME}}

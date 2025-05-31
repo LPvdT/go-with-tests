@@ -1,173 +1,93 @@
+# Default goal
 .DEFAULT_GOAL := help
 
-# ==================================================================================== #
-# PACKAGE CONFIGURATION
-# ==================================================================================== #
-
-# Sets the path to the main package and the main Go file
-MAIN_PACKAGE_PATH := cmd/webserver
+## Config
 MAIN_GO_FILE := main.go
-
-# Sets the binary name and output directory
-BINARY_NAME := http-server
 OUTPUT_DIR := dist
 
-# ==================================================================================== #
-# SINGLE BINARY CONFIGURATION
-# ==================================================================================== #
+# Package paths
+MAIN_PACKAGE_PATH_WEBSERVER := cmd/webserver
+MAIN_PACKAGE_PATH_CLI := cmd/cli
 
-OS := linux
-ARCH := amd64
+# Binary names
+BINARY_NAME_WEBSERVER := http-server
+BINARY_NAME_CLI := cli
 
-# ==================================================================================== #
-# CROSS-COMPILE CONFIGURATION (/matrix recipes)
-# ==================================================================================== #
-
-# Set the OS and ARCH options based for cross-compilation
+# Cross-compilation matrix
 OS_LIST := linux darwin windows
 ARCH_LIST := amd64 arm64
 
-# ===================================================================================== #
-
-# Create a list of all possible OS/ARCH combinations
-MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST),$(foreach arch,$(ARCH_LIST),$(BINARY_NAME)_$(os)_$(arch)$(if $(filter $(os),windows),.exe)))
-
-# Create the full paths for the binaries
+# Matrix targets
+MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST), \
+  $(foreach arch,$(ARCH_LIST), \
+    $(addprefix $(BINARY_NAME_WEBSERVER)_,$(os)_$(arch)$(if $(filter $(os),windows),.exe)) \
+    $(addprefix $(BINARY_NAME_CLI)_,$(os)_$(arch)$(if $(filter $(os),windows),.exe)) \
+  ) \
+)
 MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(binary))
 
-# ==================================================================================== #
-# ENTRYPOINT
-# ==================================================================================== #
+# Detect extension
+EXT := $(if $(filter $(OS),windows),.exe)
 
-## help: print this help message (default target)
+# build-and-pack: Internal helper function
+define build_and_pack
+	@mkdir -p $(dir $1)
+	@binary_name=$$(basename $1); \
+	noext_name=$${binary_name%%.*}; \
+	os=$$(echo $$noext_name | cut -d'_' -f2); \
+	arch=$$(echo $$noext_name | cut -d'_' -f3); \
+	if echo $$noext_name | grep -q '^$(BINARY_NAME_WEBSERVER)_'; then \
+		package_path=$(MAIN_PACKAGE_PATH_WEBSERVER); \
+	else \
+		package_path=$(MAIN_PACKAGE_PATH_CLI); \
+	fi; \
+	echo "[+] - [$$os/$$arch] - Packing $$binary_name ($$package_path/$(MAIN_GO_FILE))..."; \
+	GOOS=$$os GOARCH=$$arch go build -ldflags='-s' -o=$1 $$package_path/$(MAIN_GO_FILE); \
+	if [ "$$os" = "darwin" ]; then \
+		upx --best --lzma --force-macos $1 || (echo "[*] \033[31m\033[1mUPX failed for $$os/$$arch, skipping...\033[0m"; true); \
+	else \
+		upx --best --lzma $1 || (echo "[*] \033[31m\033[1mUPX failed for $$os/$$arch, skipping...\033[0m"; true); \
+	fi
+endef
+
+# Pattern rule for matrix builds
+$(OUTPUT_DIR)/%:
+	$(call build_and_pack,$@)
+
+# compress-upx: Compress the binary using UPX
+.PHONY: compress-upx
+compress-upx:
+	@if [ "$(OS)" = "darwin" ]; then \
+		upx --best --lzma --force-macos $(FILE) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
+	else \
+		upx --best --lzma $(FILE) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
+	fi
+
 .PHONY: help
-help:
-	@echo 'Usage:'
-	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
+help: ## Show available make targets
+	@grep -E '^[a-zA-Z0-9_/.-]+:.*?## .+$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-## tree: display the directory tree of the project
-.PHONY: tree
-tree:
-	@echo "[+] Generating directory tree..."
-	@mkdir -p ${OUTPUT_DIR}/tree
-	tree -an --gitignore --dirsfirst --gitignore > ${OUTPUT_DIR}/tree/tree.txt
-
-# ==================================================================================== #
-# DEVELOPMENT
-# ==================================================================================== #
-
-## tidy: [development] tidy modfiles and format .go files
-.PHONY: tidy
-tidy:
-	go mod tidy -v
-	gofumpt -l -w .
-
-## run: [development] run the application
-.PHONY: run
-run:
-	GOOS=${OS} GOARCH=${ARCH} go run ${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE}
-
-# ==================================================================================== #
-# QUALITY CONTROL
-# ==================================================================================== #
-
-## audit: [quality-control] run quality control checks
-.PHONY: audit
-audit:
-	go mod tidy -diff
-	go mod verify
-	test -z "$(shell gofumpt -l .)"
-	go vet ./...
-	go run honnef.co/go/tools/cmd/staticcheck@latest -checks=all,-ST1000,-U1000 ./...
-	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-
-## test: [quality-control] run all tests
-.PHONY: test
-test:
-	go test -v -race -buildvcs=true ./...
-
-## test/cover: [quality-control] run all tests and display coverage
-.PHONY: test/cover
-test/cover: coverage clean-test-cache
-	@mkdir -p ${OUTPUT_DIR}/coverage
-	go test -v -race -buildvcs=true -coverprofile=${OUTPUT_DIR}/coverage/coverage.out ./...
-	go tool cover -html=${OUTPUT_DIR}/coverage/coverage.out -o ${OUTPUT_DIR}/coverage/coverage.html
-
-## upgradeable: [quality-control] list direct dependencies that have upgrades available
-.PHONY: upgradeable
-upgradeable:
-	@go list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all
-
-# ==================================================================================== #
-# HELPERS
-# ==================================================================================== #
-
-# no-dirty: [helper] ensure the working directory is clean before running commands
-.PHONY: no-dirty
-no-dirty:
-	@if [ -n "$(shell git status --porcelain)" ]; then \
-		echo "[+] Error: Working directory is not clean. Please commit or stash your changes."; \
-		exit 1; \
-	fi
-
-# coverage: [helper] create a directory for coverage reports
-.PHONY: coverage
-coverage:
-	@mkdir -p ${OUTPUT_DIR}/$@
-
-# clean-test-cache: [helper] remove all test cache files
-.PHONY: clean-test-cache
-clean-test-cache:
-	@echo "[+] Cleaning up test cache files..."
-	@go clean -testcache
-
-## clean: [helper] remove all build artifacts
 .PHONY: clean
-clean:
-	@echo "[+] Cleaning up build artifacts..."
-	@rm -rf ${OUTPUT_DIR}
-	@rm -rf coverage
-	@rm -rf *.db*
+clean: ## Clean up the output directory
+	@echo "[*] Cleaning up $(OUTPUT_DIR)"
+	@rm -rf $(OUTPUT_DIR)
 
-# ==================================================================================== #
-# OPERATIONS
-# ==================================================================================== #
+.PHONY: production/pack-webserver
+production/pack-webserver: ## Build and pack the webserver binary
+	@echo "[*] Building $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
+	@GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags='-s' -o=$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT) $(MAIN_PACKAGE_PATH_WEBSERVER)/$(MAIN_GO_FILE)
+	@$(MAKE) compress-upx FILE=$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT)
 
-## build: [operations] build the application
-.PHONY: build
-.DELETE_ON_ERROR:
-build: no-dirty audit test
-	@if [ "${OS}" = "windows" ]; then \
-		BINARY_NAME="${BINARY_NAME}_${OS}_${ARCH}.exe"; \
-	elif [ "${OS}" = "darwin" ]; then \
-		BINARY_NAME="${BINARY_NAME}_${OS}_${ARCH}"; \
-	else \
-		BINARY_NAME="${BINARY_NAME}_${OS}_${ARCH}"; \
-	fi
+.PHONY: production/pack-cli
+production/pack-cli: ## Build and pack the CLI binary
+	@echo "[*] Building $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
+	@GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags='-s' -o=$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT) $(MAIN_PACKAGE_PATH_CLI)/$(MAIN_GO_FILE)
+	@$(MAKE) compress-upx FILE=$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT)
 
-	@echo "[+] - [${OS}/${ARCH}] - Building ${BINARY_NAME} (${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE})..."
+.PHONY: production/pack-all
+production/pack-all: production/pack-webserver production/pack-cli ## Build and pack both binaries for local OS/ARCH
 
-	GOOS=${OS} GOARCH=${ARCH} go build -o=${OUTPUT_DIR}/bin/${BINARY_NAME} ${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE}
-
-## production/pack: [operations] pack (compress) the application for production
-.PHONY: production/pack
-.DELETE_ON_ERROR:
-production/pack: no-dirty clean audit
-	@echo "[+] - [${OS}/${ARCH}] - Packing ${BINARY_NAME} (${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE})..."
-
-	@GOOS=${OS} GOARCH=${ARCH} go build -ldflags='-s' -o=${OUTPUT_DIR}/bin/${BINARY_NAME}$(if $(filter $(OS),windows),.exe) ${MAIN_PACKAGE_PATH}/${MAIN_GO_FILE}
-
-	@if [ "${OS}" = "darwin" ]; then \
-		upx --best --lzma --force-macos ${OUTPUT_DIR}/bin/${BINARY_NAME}$(if $(filter $(OS),windows),.exe) || (echo "[*] \033[31m\033[1mUPX failed for ${OS}/${ARCH}, skipping...\033[0m"; true); \
-	else \
-		upx --best --lzma ${OUTPUT_DIR}/bin/${BINARY_NAME}$(if $(filter $(OS),windows),.exe) || (echo "[*] \033[31m\033[1mUPX failed for ${OS}/${ARCH}, skipping...\033[0m"; true); \
-	fi
-
-## production/pack/matrix: [operations] pack (compress) the application for production for all OS/ARCH combinations
 .PHONY: production/pack/matrix
 .DELETE_ON_ERROR:
-production/pack/matrix: $(MATRIX_BINARY_PATHS) test
-$(OUTPUT_DIR)/%:
-	@echo "[+] - [$(word 2,$(subst _, ,$(notdir $@)))/$(word 3,$(subst _, ,$(basename $(notdir $@))))] - Packing $(BINARY_NAME) ($(MAIN_PACKAGE_PATH)/$(MAIN_GO_FILE))..."
-
-	@$(MAKE) production/pack OUTPUT_DIR=$(dir $@) BINARY_NAME=$(notdir $@) OS=$(word 2,$(subst _, ,$(notdir $@))) ARCH=$(word 3,$(subst _, ,$(basename $(notdir $@))))
+production/pack/matrix: $(MATRIX_BINARY_PATHS) ## Cross-compile and pack all OS/ARCH combinations
