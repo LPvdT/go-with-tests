@@ -6,4 +6,6 @@ type CLI struct {
 	PlayerStore server.PlayerStore
 }
 
-func (cli *CLI) PlayPoker() {}
+func (cli *CLI) PlayPoker() {
+	cli.PlayerStore.RecordWin("Cleo")
+}
