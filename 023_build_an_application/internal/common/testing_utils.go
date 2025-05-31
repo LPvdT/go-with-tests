@@ -157,3 +157,17 @@ func AssertNoError(t testing.TB, err error) {
 		t.Fatalf("got an error but didn't want one: %v", err)
 	}
 }
+
+// AssertPlayerWin checks that the RecordWin function was called with the correct winner.
+//
+// It reports a fatal error if the function was not called with the correct winner.
+// This function is a test helper, so it should be used within a test context.
+func AssertPlayerWin(t testing.TB, store *StubPlayerStore, winner string) {
+	t.Helper()
+	if len(store.WinCalls) != 1 {
+		t.Fatalf("got %d calls to RecordWin want %d", len(store.WinCalls), 1)
+	}
+	if store.WinCalls[0] != winner {
+		t.Errorf("did not store correct winner got %q want %q", store.WinCalls[0], winner)
+	}
+}
