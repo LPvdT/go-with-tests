@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"bufio"
 	"io"
+	"strings"
 
 	"github.com/LPvdT/go-with-tests/application/internal/server"
 )
@@ -12,5 +14,11 @@ type CLI struct {
 }
 
 func (cli *CLI) PlayPoker() {
-	cli.PlayerStore.RecordWin("Chris")
+	reader := bufio.NewScanner(cli.In)
+	reader.Scan()
+	cli.PlayerStore.RecordWin(extractWinner(reader.Text()))
+}
+
+func extractWinner(userInput string) string {
+	return strings.Replace(userInput, " wins", "", 1)
 }
