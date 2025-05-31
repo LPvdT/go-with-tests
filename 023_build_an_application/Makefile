@@ -29,10 +29,6 @@ MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(b
 # Detect extension
 EXT := $(if $(filter $(OS),windows),.exe)
 
-# Pattern rule for matrix builds
-$(OUTPUT_DIR)/%:
-	$(call build_and_pack,$@)
-
 # build-and-pack: Internal helper function
 define build_and_pack
 	@mkdir -p $(dir $1)
@@ -54,6 +50,11 @@ define build_and_pack
 	fi
 endef
 
+# Pattern rule for matrix builds
+$(OUTPUT_DIR)/%:
+	$(call build_and_pack,$@)
+
+# compress-upx: Compress the binary using UPX
 .PHONY: compress-upx
 compress-upx:
 	@if [ "$(OS)" = "darwin" ]; then \
