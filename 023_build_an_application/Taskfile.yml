@@ -2,6 +2,7 @@
 
 # This is just a Taskfile to check whether or not it would be suitable to
 # replace the Makefile.
+# It is in no way a replacement for the current Makefile, but when properly fleshed out it could be.
 
 version: '3'
 
