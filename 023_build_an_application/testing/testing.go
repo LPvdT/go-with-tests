@@ -1,4 +1,4 @@
-package common
+package testing
 
 import (
 	"encoding/json"
@@ -10,12 +10,14 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/LPvdT/go-with-tests/application/internal/common"
 )
 
 type StubPlayerStore struct {
 	Scores   map[string]int
 	WinCalls []string
-	League   []Player
+	League   []common.Player
 }
 
 func (s *StubPlayerStore) GetPlayerScore(name string) int {
@@ -27,7 +29,7 @@ func (s *StubPlayerStore) RecordWin(name string) {
 	s.WinCalls = append(s.WinCalls, name)
 }
 
-func (s *StubPlayerStore) GetLeague() League {
+func (s *StubPlayerStore) GetLeague() common.League {
 	return s.League
 }
 
@@ -63,7 +65,7 @@ func NewPostWinRequest(name string) *http.Request {
 
 // AssertLeague compares two slices of Player and reports an error if they are not deeply equal.
 // It is useful for asserting that the actual league data matches the expected data in tests.
-func AssertLeague(t testing.TB, got, want []Player) {
+func AssertLeague(t testing.TB, got, want []common.Player) {
 	t.Helper()
 
 	// The league slice (which is written by hand in the test) needs
@@ -93,7 +95,7 @@ func NewLeagueRequest() *http.Request {
 //
 // It reports a fatal error if the response cannot be parsed.
 // This function is a test helper, so it should be used within a test context.
-func GetLeagueFromResponse(t testing.TB, body io.Reader) (league []Player) {
+func GetLeagueFromResponse(t testing.TB, body io.Reader) (league []common.Player) {
 	t.Helper()
 	err := json.NewDecoder(body).Decode(&league)
 	if err != nil {
