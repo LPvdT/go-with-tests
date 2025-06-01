@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -25,6 +26,6 @@ func main() {
 		log.Fatalf("problem creating file system player store, %v ", err)
 	}
 
-	game := cli.CLI{PlayerStore: store, In: os.Stdin}
+	game := cli.CLI{PlayerStore: store, In: *bufio.NewScanner(os.Stdin)}
 	game.PlayPoker()
 }
