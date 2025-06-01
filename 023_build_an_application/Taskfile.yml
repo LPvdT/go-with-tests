@@ -29,6 +29,8 @@ tasks:
 
   build:all:
     desc: Build and compress both binaries for host platform
+    aliases:
+      - build
     deps: [build:webserver, build:cli]
 
   build:webserver:
@@ -51,20 +53,21 @@ tasks:
     desc: Cross-compile and compress all OS/ARCH binaries
     cmds:
       - |
-        for os in {{.OS_LIST}}; do
-          for arch in {{.ARCH_LIST}}; do
-            for bin in {{.BINARY_NAME_WEBSERVER}} {{.BINARY_NAME_CLI}}; do
-              if [ "$bin" = "{{.BINARY_NAME_WEBSERVER}}" ]; then
-                pkg="{{.MAIN_PACKAGE_PATH_WEBSERVER}}"
+        # usr/bin/env bash
+        for os in linux darwin windows; do
+          for arch in amd64 arm64; do
+            for bin in http-server cli; do
+              if [ "$bin" = "http-server" ]; then
+                pkg="cmd/webserver"
               else
-                pkg="{{.MAIN_PACKAGE_PATH_CLI}}"
+                pkg="cmd/cli"
               fi
               ext=""
-              [ "$os" = "windows" ] && ext="{{.EXT_WIN}}"
-              output="{{.OUTPUT_DIR}}/${bin}_${os}_${arch}${ext}"
-              echo "[+] - [$os/$arch] - Building $output ($pkg/{{.MAIN_GO_FILE}})..."
-              mkdir -p $(dirname "$output")
-              GOOS=$os GOARCH=$arch go build -ldflags='-s' -o="$output" "$pkg/{{.MAIN_GO_FILE}}"
+              [ "$os" = "windows" ] && ext=".exe"
+              output="dist/${bin}_${os}_${arch}${ext}"
+              echo "[+] - [$os/$arch] - Building $output ($pkg/main.go)..."
+              mkdir -p "$(dirname "$output")"
+              GOOS=$os GOARCH=$arch go build -ldflags='-s' -o="$output" "$pkg/main.go"
               if [ "$os" = "darwin" ]; then
                 upx --best --lzma --force-macos "$output" || echo "[*] UPX failed for $os/$arch, skipping..."
               else
@@ -84,9 +87,13 @@ tasks:
       - echo "[*] Building {{.NAME}} for $(go env GOOS)/$(go env GOARCH)"
       - go build -ldflags='-s' -o={{.OUTPUT_DIR}}/{{.NAME}}{{.EXT}}
         {{.PKG}}/{{.MAIN_GO_FILE}}
-      - task: compress
-        vars:
-          FILE: '{{.OUTPUT_DIR}}/{{.NAME}}{{.EXT}}'
+      - |
+        FILE="{{.OUTPUT_DIR}}/{{.NAME}}{{if eq OS "windows"}}.exe{{end}}"
+        if [[ "$(go env GOOS)" == "darwin" ]]; then
+          upx --best --lzma --force-macos "$FILE" || echo "[*] UPX failed, skipping..."
+        else
+          upx --best --lzma "$FILE" || echo "[*] UPX failed, skipping..."
+        fi
 
   compress:
     desc: Compress a binary using UPX
