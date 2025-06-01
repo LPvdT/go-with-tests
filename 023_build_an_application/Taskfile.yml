@@ -27,7 +27,7 @@ tasks:
       - echo "[*] Cleaning {{.OUTPUT_DIR}}"
       - rm -rf {{.OUTPUT_DIR}}
 
-  build:
+  build:all:
     desc: Build and compress both binaries for host platform
     deps: [build:webserver, build:cli]
 
