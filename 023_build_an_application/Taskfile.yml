@@ -54,6 +54,8 @@ tasks:
       - release
     vars:
       BINARIES: '{{index .BIN_LIST 0}} {{index .BIN_LIST 1}}'
+      EXT:
+        sh: '[ "$(go env GOOS)" = "windows" ] && echo "{{.EXT_WIN}}" || echo ""'
     cmds:
       - for:
           matrix:
@@ -61,7 +63,7 @@ tasks:
               ref: .OS_LIST
             ARCH:
               ref: .ARCH_LIST
-        cmd: |
+        cmd: |-
           for bin in {{.BINARIES}}; do
             if [ "$bin" = "http-server" ]; then
               pkg={{.MAIN_PACKAGE_PATH_WEBSERVER}}
@@ -82,9 +84,6 @@ tasks:
             fi
           done
         silent: true
-        vars:
-          EXT:
-            sh: '[ "$(go env GOOS)" = "windows" ] && echo "{{.EXT_WIN}}" || echo ""'
 
   _build:
     internal: true
