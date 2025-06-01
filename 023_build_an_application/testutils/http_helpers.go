@@ -1,3 +1,5 @@
+// Package testutils provides utility functions for testing for HTTP handlers
+// and responses, temporary files, and assertions in tests.
 package testutils
 
 import (

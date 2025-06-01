@@ -1,3 +1,4 @@
+// Package testutils provides utility functions for testing player stores and HTTP handlers.
 package playertest
 
 import (
