@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"bufio"
 	"strings"
 	"testing"
 
@@ -13,7 +14,7 @@ func TestCLI(t *testing.T) {
 		in := strings.NewReader(("Chris wins\n"))
 		playerStore := &playertest.StubPlayerStore{}
 
-		cli := &cli.CLI{PlayerStore: playerStore, In: in}
+		cli := &cli.CLI{PlayerStore: playerStore, In: *bufio.NewScanner(in)}
 		cli.PlayPoker()
 
 		playertest.AssertPlayerWin(t, playerStore, "Chris")
@@ -23,7 +24,7 @@ func TestCLI(t *testing.T) {
 		in := strings.NewReader(("Cleo wins\n"))
 		playerStore := &playertest.StubPlayerStore{}
 
-		cli := &cli.CLI{PlayerStore: playerStore, In: in}
+		cli := &cli.CLI{PlayerStore: playerStore, In: *bufio.NewScanner(in)}
 		cli.PlayPoker()
 
 		playertest.AssertPlayerWin(t, playerStore, "Cleo")

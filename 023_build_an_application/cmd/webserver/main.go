@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/LPvdT/go-with-tests/application/internal/filesystem"
@@ -19,17 +18,12 @@ var (
 const dbFileName string = "game.db.json"
 
 func main() {
-	// Open the database file with read and write permissions, creating it if it doesn't exist.
-	db, err := os.OpenFile(dbFileName, os.O_RDWR|os.O_CREATE, 0o666)
+	// Create a file system player store from the specified database file.
+	store, close, err := filesystem.FileSystemPlayerStoreFromFile(dbFileName)
 	if err != nil {
-		log.Fatalf("problem opening %s %v", dbFileName, err)
+		log.Fatal(err)
 	}
-
-	// Create a new file system player store with the database.
-	store, err := filesystem.NewFileSystemPlayerStore(db)
-	if err != nil {
-		log.Fatalf("problem creating file system player store: %v", err)
-	}
+	defer close()
 
 	// Initialize the player server with the player store.
 	server := server.NewPlayerServer(store)
