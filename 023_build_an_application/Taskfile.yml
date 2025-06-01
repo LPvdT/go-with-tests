@@ -50,12 +50,10 @@ tasks:
 
   build:matrix:
     desc: Cross-compile and compress all OS/ARCH binaries
-    aliases:
-      - release
+    aliases: [release]
+    silent: true
     vars:
-      BINARIES: '{{index .BIN_LIST 0}} {{index .BIN_LIST 1}}'
-      EXT:
-        sh: '[ "$(go env GOOS)" = "windows" ] && echo "{{.EXT_WIN}}" || echo ""'
+      BIN_LIST: '{{index .BIN_LIST 0}} {{index .BIN_LIST 1}}'
     cmds:
       - for:
           matrix:
@@ -64,26 +62,31 @@ tasks:
             ARCH:
               ref: .ARCH_LIST
         cmd: |-
-          for bin in {{.BINARIES}}; do
+          export GOOS={{.ITEM.OS}}
+          export GOARCH={{.ITEM.ARCH}}
+
+          for bin in {{.BIN_LIST}}; do
             if [ "$bin" = "http-server" ]; then
-              pkg={{.MAIN_PACKAGE_PATH_WEBSERVER}}
+              pkg="{{.MAIN_PACKAGE_PATH_WEBSERVER}}"
             else
-              pkg={{.MAIN_PACKAGE_PATH_CLI}}
+              pkg="{{.MAIN_PACKAGE_PATH_CLI}}"
             fi
 
-            output="{{.OUTPUT_DIR}}/${bin}_{{.OS}}_{{.ARCH}}${.EXT}"
+            ext=""
+            [ "$GOOS" = "windows" ] && ext=".exe"
 
-            echo "[+] - [{{.OS}}/{{.ARCH}}] - Building $output ($pkg/main.go)..."
+            output="{{.OUTPUT_DIR}}/${bin}_${GOOS}_${GOARCH}${ext}"
+            echo "[+] - [$GOOS/$GOARCH] - Building $output ($pkg/main.go)..."
+
             mkdir -p "$(dirname "$output")"
-            GOOS={{.OS}} GOARCH={{.ARCH}} go build -ldflags='-s' -o="$output" "$pkg/main.go"
+            GOOS=$GOOS GOARCH=$GOARCH go build -ldflags='-s' -o="$output" "$pkg/main.go"
 
-            if [ "{{.OS}}" = "darwin" ]; then
-              upx --best --lzma --force-macos "$output" || echo "[*] UPX failed for {{.OS}}/{{.ARCH}}, skipping..."
+            if [ "$GOOS" = "darwin" ]; then
+              upx --best --lzma --force-macos "$output" || echo "[*] UPX failed for $GOOS/$GOARCH, skipping..."
             else
-              upx --best --lzma "$output" || echo "[*] UPX failed for {{.OS}}/{{.ARCH}}, skipping..."
+              upx --best --lzma "$output" || echo "[*] UPX failed for $GOOS/$GOARCH, skipping..."
             fi
           done
-        silent: true
 
   _build:
     internal: true
