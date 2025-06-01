@@ -1,30 +1,29 @@
 version: '3'
 
 vars:
-  MAIN_GO_FILE: main.go
   OUTPUT_DIR: dist
 
-  BINARY_NAME_WEBSERVER: http-server
-  BINARY_NAME_CLI: cli
+  MAIN_PACKAGE_PATH_WEBSERVER: ./cmd/webserver
+  MAIN_PACKAGE_PATH_CLI: ./cmd/cli
+  BIN_LIST: [http-server, cli]
 
-  MAIN_PACKAGE_PATH_WEBSERVER: cmd/webserver
-  MAIN_PACKAGE_PATH_CLI: cmd/cli
-
-  OS_LIST: linux,darwin,windows
-  ARCH_LIST: amd64,arm64
+  OS_LIST: [linux, darwin, windows]
+  ARCH_LIST: [amd64, arm64]
 
   EXT_WIN: .exe
 
 tasks:
   default:
     desc: Show available tasks
+    silent: true
     cmds:
-      - task --list-all
+      - task --list-all --sort=alphanumeric
 
   clean:
     desc: Clean output directory
+    silent: true
     cmds:
-      - echo "[*] Cleaning {{.OUTPUT_DIR}}"
+      - 'echo "[*] Cleaning compiled binaries in: {{.OUTPUT_DIR}}"'
       - rm -rf {{.OUTPUT_DIR}}
 
   build:all:
@@ -38,7 +37,7 @@ tasks:
     cmds:
       - task: _build
         vars:
-          NAME: '{{.BINARY_NAME_WEBSERVER}}'
+          NAME: '{{index .BIN_LIST 0}}'
           PKG: '{{.MAIN_PACKAGE_PATH_WEBSERVER}}'
 
   build:cli:
@@ -46,49 +45,60 @@ tasks:
     cmds:
       - task: _build
         vars:
-          NAME: '{{.BINARY_NAME_CLI}}'
+          NAME: '{{index .BIN_LIST 1}}'
           PKG: '{{.MAIN_PACKAGE_PATH_CLI}}'
 
   build:matrix:
     desc: Cross-compile and compress all OS/ARCH binaries
+    aliases:
+      - release
+    vars:
+      BINARIES: '{{index .BIN_LIST 0}} {{index .BIN_LIST 1}}'
     cmds:
-      - |
-        # usr/bin/env bash
-        for os in linux darwin windows; do
-          for arch in amd64 arm64; do
-            for bin in http-server cli; do
-              if [ "$bin" = "http-server" ]; then
-                pkg="cmd/webserver"
-              else
-                pkg="cmd/cli"
-              fi
-              ext=""
-              [ "$os" = "windows" ] && ext=".exe"
-              output="dist/${bin}_${os}_${arch}${ext}"
-              echo "[+] - [$os/$arch] - Building $output ($pkg/main.go)..."
-              mkdir -p "$(dirname "$output")"
-              GOOS=$os GOARCH=$arch go build -ldflags='-s' -o="$output" "$pkg/main.go"
-              if [ "$os" = "darwin" ]; then
-                upx --best --lzma --force-macos "$output" || echo "[*] UPX failed for $os/$arch, skipping..."
-              else
-                upx --best --lzma "$output" || echo "[*] UPX failed for $os/$arch, skipping..."
-              fi
-            done
+      - for:
+          matrix:
+            OS:
+              ref: .OS_LIST
+            ARCH:
+              ref: .ARCH_LIST
+        cmd: |
+          for bin in {{.BINARIES}}; do
+            if [ "$bin" = "http-server" ]; then
+              pkg={{.MAIN_PACKAGE_PATH_WEBSERVER}}
+            else
+              pkg={{.MAIN_PACKAGE_PATH_CLI}}
+            fi
+
+            output="{{.OUTPUT_DIR}}/${bin}_{{.OS}}_{{.ARCH}}${.EXT}"
+
+            echo "[+] - [{{.OS}}/{{.ARCH}}] - Building $output ($pkg/main.go)..."
+            mkdir -p "$(dirname "$output")"
+            GOOS={{.OS}} GOARCH={{.ARCH}} go build -ldflags='-s' -o="$output" "$pkg/main.go"
+
+            if [ "{{.OS}}" = "darwin" ]; then
+              upx --best --lzma --force-macos "$output" || echo "[*] UPX failed for {{.OS}}/{{.ARCH}}, skipping..."
+            else
+              upx --best --lzma "$output" || echo "[*] UPX failed for {{.OS}}/{{.ARCH}}, skipping..."
+            fi
           done
-        done
+        silent: true
+        vars:
+          EXT:
+            sh: '[ "$(go env GOOS)" = "windows" ] && echo "{{.EXT_WIN}}" || echo ""'
 
   _build:
     internal: true
+    silent: true
     vars:
       EXT:
         sh: '[ "$(go env GOOS)" = "windows" ] && echo "{{.EXT_WIN}}" || echo ""'
     cmds:
       - mkdir -p {{.OUTPUT_DIR}}
       - echo "[*] Building {{.NAME}} for $(go env GOOS)/$(go env GOARCH)"
-      - go build -ldflags='-s' -o={{.OUTPUT_DIR}}/{{.NAME}}{{.EXT}}
-        {{.PKG}}/{{.MAIN_GO_FILE}}
-      - |
+      - "go build -ldflags='-s' -o={{.OUTPUT_DIR}}/{{.NAME}}{{.EXT}} {{.PKG}}/{{.MAIN_GO_FILE}}"
+      - |-
         FILE="{{.OUTPUT_DIR}}/{{.NAME}}{{if eq OS "windows"}}.exe{{end}}"
+
         if [[ "$(go env GOOS)" == "darwin" ]]; then
           upx --best --lzma --force-macos "$FILE" || echo "[*] UPX failed, skipping..."
         else
@@ -96,10 +106,12 @@ tasks:
         fi
 
   compress:
-    desc: Compress a binary using UPX
+    desc: Compress a binary (FILE) using UPX
     vars:
-      FILE: ''
+      FILE: '{{.FILE| default ""}}'
+    silent: true
     cmds:
+      - echo "[*] Compressing {{.FILE}} using UPX"
       - |
         if [[ "$(go env GOOS)" == "darwin" ]]; then
           upx --best --lzma --force-macos "{{.FILE}}" || echo "[*] UPX failed, skipping..."
