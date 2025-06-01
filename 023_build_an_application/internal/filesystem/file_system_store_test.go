@@ -4,11 +4,13 @@ import (
 	"testing"
 
 	"github.com/LPvdT/go-with-tests/application/internal/common"
+	"github.com/LPvdT/go-with-tests/application/playertest"
+	"github.com/LPvdT/go-with-tests/application/testutils"
 )
 
 func TestFileSystemStore(t *testing.T) {
 	t.Run("league from a reader", func(t *testing.T) {
-		database, cleanDatabase := common.CreateTempFile(t, `[
+		database, cleanDatabase := testutils.CreateTempFile(t, `[
 			{"Name": "Cleo", "Wins": 10},
 			{"Name": "Chris", "Wins": 33}
 		]`)
@@ -25,15 +27,15 @@ func TestFileSystemStore(t *testing.T) {
 			{Name: "Chris", Wins: 33},
 		}
 
-		common.AssertLeague(t, got, want)
+		playertest.AssertLeague(t, got, want)
 
 		// Read the file again
 		got = store.GetLeague()
-		common.AssertLeague(t, got, want)
+		playertest.AssertLeague(t, got, want)
 	})
 
 	t.Run("get player score", func(t *testing.T) {
-		database, cleanDatabase := common.CreateTempFile(t, `[
+		database, cleanDatabase := testutils.CreateTempFile(t, `[
 			{"Name": "Cleo", "Wins": 10},
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
@@ -46,11 +48,11 @@ func TestFileSystemStore(t *testing.T) {
 		got := store.GetPlayerScore("Chris")
 		want := 33
 
-		common.AssertScoreEquals(t, got, want)
+		testutils.AssertScoreEquals(t, got, want)
 	})
 
 	t.Run("store wins for existing players", func(t *testing.T) {
-		database, cleanDatabase := common.CreateTempFile(t, `[
+		database, cleanDatabase := testutils.CreateTempFile(t, `[
 			{"Name": "Cleo", "Wins": 10},
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
@@ -64,11 +66,11 @@ func TestFileSystemStore(t *testing.T) {
 		got := store.GetPlayerScore("Chris")
 		want := 34
 
-		common.AssertScoreEquals(t, got, want)
+		testutils.AssertScoreEquals(t, got, want)
 	})
 
 	t.Run("store wins for new players", func(t *testing.T) {
-		database, cleanDatabase := common.CreateTempFile(t, `[
+		database, cleanDatabase := testutils.CreateTempFile(t, `[
 			{"Name": "Cleo", "Wins": 10},
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
@@ -83,35 +85,35 @@ func TestFileSystemStore(t *testing.T) {
 		got := store.GetPlayerScore("Pepper")
 		want := 1
 
-		common.AssertScoreEquals(t, got, want)
+		testutils.AssertScoreEquals(t, got, want)
 	})
 
 	t.Run("works with an empty file", func(t *testing.T) {
-		database, cleanDatabase := common.CreateTempFile(t, "")
+		database, cleanDatabase := testutils.CreateTempFile(t, "")
 		defer cleanDatabase()
 
 		_, err := NewFileSystemPlayerStore(database)
 
-		common.AssertNoError(t, err)
+		testutils.AssertNoError(t, err)
 	})
 
 	t.Run("league sorted", func(t *testing.T) {
-		database, cleanDatabase := common.CreateTempFile(t, `[
+		database, cleanDatabase := testutils.CreateTempFile(t, `[
 		{"Name": "Cleo", "Wins": 10},
 		{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
 
 		store, err := NewFileSystemPlayerStore(database)
-		common.AssertNoError(t, err)
+		testutils.AssertNoError(t, err)
 
 		got := store.GetLeague()
 		want := common.League{
 			{Name: "Chris", Wins: 33},
 			{Name: "Cleo", Wins: 10},
 		}
-		common.AssertLeague(t, got, want)
+		playertest.AssertLeague(t, got, want)
 
 		got = store.GetLeague()
-		common.AssertLeague(t, got, want)
+		playertest.AssertLeague(t, got, want)
 	})
 }
