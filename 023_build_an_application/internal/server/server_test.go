@@ -6,10 +6,12 @@ import (
 	"testing"
 
 	"github.com/LPvdT/go-with-tests/application/internal/common"
+	"github.com/LPvdT/go-with-tests/application/playertest"
+	"github.com/LPvdT/go-with-tests/application/testutils"
 )
 
 func TestGETPlayers(t *testing.T) {
-	store := common.StubPlayerStore{
+	store := playertest.StubPlayerStore{
 		Scores: map[string]int{
 			"Pepper": 20,
 			"Floyd":  10,
@@ -20,37 +22,37 @@ func TestGETPlayers(t *testing.T) {
 	server := NewPlayerServer(&store)
 
 	t.Run("returns Pepper's score", func(t *testing.T) {
-		request := common.NewGetScoreRequest("Pepper")
+		request := playertest.NewGetScoreRequest("Pepper")
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
-		common.AssertStatus(t, response.Code, http.StatusOK)
-		common.AssertResponseBody(t, response.Body.String(), "20")
+		testutils.AssertStatus(t, response.Code, http.StatusOK)
+		testutils.AssertResponseBody(t, response.Body.String(), "20")
 	})
 
 	t.Run("returns Floyd's score", func(t *testing.T) {
-		request := common.NewGetScoreRequest("Floyd")
+		request := playertest.NewGetScoreRequest("Floyd")
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
-		common.AssertStatus(t, response.Code, http.StatusOK)
-		common.AssertResponseBody(t, response.Body.String(), "10")
+		testutils.AssertStatus(t, response.Code, http.StatusOK)
+		testutils.AssertResponseBody(t, response.Body.String(), "10")
 	})
 
 	t.Run("returns 404 on missing players", func(t *testing.T) {
-		request := common.NewGetScoreRequest("Apollo")
+		request := playertest.NewGetScoreRequest("Apollo")
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
-		common.AssertStatus(t, response.Code, http.StatusNotFound)
+		testutils.AssertStatus(t, response.Code, http.StatusNotFound)
 	})
 }
 
 func TestStoreWins(t *testing.T) {
-	store := common.StubPlayerStore{
+	store := playertest.StubPlayerStore{
 		Scores:   map[string]int{},
 		WinCalls: nil,
 		League:   nil,
@@ -60,13 +62,13 @@ func TestStoreWins(t *testing.T) {
 	t.Run("it records wins on POST", func(t *testing.T) {
 		player := "Pepper"
 
-		request := common.NewPostWinRequest(player)
+		request := playertest.NewPostWinRequest(player)
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
-		common.AssertStatus(t, response.Code, http.StatusAccepted)
-		common.AssertPlayerWin(t, &store, player)
+		testutils.AssertStatus(t, response.Code, http.StatusAccepted)
+		playertest.AssertPlayerWin(t, &store, player)
 	})
 }
 
@@ -78,20 +80,20 @@ func TestLeague(t *testing.T) {
 			{Name: "Tiest", Wins: 14},
 		}
 
-		store := common.StubPlayerStore{
+		store := playertest.StubPlayerStore{
 			Scores: nil, WinCalls: nil, League: wantedLeague,
 		}
 		server := NewPlayerServer(&store)
 
-		request := common.NewLeagueRequest()
+		request := playertest.NewLeagueRequest()
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
-		got := common.GetLeagueFromResponse(t, response.Body)
+		got := playertest.GetLeagueFromResponse(t, response.Body)
 
-		common.AssertStatus(t, response.Code, http.StatusOK)
-		common.AssertLeague(t, got, wantedLeague)
-		common.AssertContentType(t, response, jsonContentType)
+		testutils.AssertStatus(t, response.Code, http.StatusOK)
+		playertest.AssertLeague(t, got, wantedLeague)
+		testutils.AssertContentType(t, response, jsonContentType)
 	})
 }
