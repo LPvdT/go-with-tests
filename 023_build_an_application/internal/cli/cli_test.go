@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/LPvdT/go-with-tests/application/internal/cli"
 	"github.com/LPvdT/go-with-tests/application/playertest"
@@ -44,4 +45,16 @@ func TestCLI(t *testing.T) {
 	})
 }
 
+type SpyBlindAlerter struct {
+	alerts []struct {
+		scheduledAt time.Duration
+		amount      int
+	}
+}
+
+func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
+	s.alerts = append(s.alerts, struct {
+		scheduledAt time.Duration
+		amount      int
+	}{duration, amount})
 }
