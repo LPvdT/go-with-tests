@@ -1,10 +1,8 @@
 package cli_test
 
 import (
-	"bufio"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/LPvdT/go-with-tests/application/internal/cli"
 	"github.com/LPvdT/go-with-tests/application/playertest"
@@ -14,8 +12,9 @@ func TestCLI(t *testing.T) {
 	t.Run("record chris win from user input", func(t *testing.T) {
 		in := strings.NewReader(("Chris wins\n"))
 		playerStore := &playertest.StubPlayerStore{}
+		blindAlerter := &cli.SpyBlindAlerter{}
 
-		cli := &cli.CLI{PlayerStore: playerStore, In: *bufio.NewScanner(in)}
+		cli := cli.NewCLI(playerStore, in, blindAlerter)
 		cli.PlayPoker()
 
 		playertest.AssertPlayerWin(t, playerStore, "Chris")
@@ -24,8 +23,9 @@ func TestCLI(t *testing.T) {
 	t.Run("record cleo win from user input", func(t *testing.T) {
 		in := strings.NewReader(("Cleo wins\n"))
 		playerStore := &playertest.StubPlayerStore{}
+		blindAlerter := &cli.SpyBlindAlerter{}
 
-		cli := &cli.CLI{PlayerStore: playerStore, In: *bufio.NewScanner(in)}
+		cli := cli.NewCLI(playerStore, in, blindAlerter)
 		cli.PlayPoker()
 
 		playertest.AssertPlayerWin(t, playerStore, "Cleo")
@@ -34,27 +34,13 @@ func TestCLI(t *testing.T) {
 	t.Run("it schedules printing of blind values", func(t *testing.T) {
 		in := strings.NewReader("Cleo wins\n")
 		playerStore := &playertest.StubPlayerStore{}
-		blindAlerter := &SpyBlindAlerter{}
+		blindAlerter := &cli.SpyBlindAlerter{}
 
 		cli := cli.NewCLI(playerStore, in, blindAlerter)
 		cli.PlayPoker()
 
-		if len(blindAlerter.alerts) != 1 {
+		if len(blindAlerter.Alerts) != 1 {
 			t.Fatal("expected a blind alert to be scheduled")
 		}
 	})
-}
-
-type SpyBlindAlerter struct {
-	alerts []struct {
-		scheduledAt time.Duration
-		amount      int
-	}
-}
-
-func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
-	s.alerts = append(s.alerts, struct {
-		scheduledAt time.Duration
-		amount      int
-	}{duration, amount})
 }
