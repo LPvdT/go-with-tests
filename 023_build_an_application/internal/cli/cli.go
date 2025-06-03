@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/LPvdT/go-with-tests/application/internal/server"
 )
@@ -13,7 +14,7 @@ type CLI struct {
 	In          bufio.Scanner
 }
 
-func NewCLI(store server.PlayerStore, in io.Reader) *CLI {
+func NewCLI(store server.PlayerStore, in io.Reader, alerter BlindAlerter) *CLI {
 	return &CLI{
 		PlayerStore: store,
 		In:          *bufio.NewScanner(in),
@@ -32,4 +33,8 @@ func extractWinner(userInput string) string {
 func (cli *CLI) readLine() string {
 	cli.In.Scan()
 	return cli.In.Text()
+}
+
+type BlindAlerter interface {
+	ScheduleAlertAt(duration time.Duration, amount int)
 }
