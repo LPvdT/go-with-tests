@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/LPvdT/go-with-tests/application/internal/server"
 )
@@ -11,16 +12,19 @@ import (
 type CLI struct {
 	PlayerStore server.PlayerStore
 	In          bufio.Scanner
+	Alerter     BlindAlerter
 }
 
-func NewCLI(store server.PlayerStore, in io.Reader) *CLI {
+func NewCLI(store server.PlayerStore, in io.Reader, alerter BlindAlerter) *CLI {
 	return &CLI{
 		PlayerStore: store,
 		In:          *bufio.NewScanner(in),
+		Alerter:     alerter,
 	}
 }
 
 func (cli *CLI) PlayPoker() {
+	cli.Alerter.ScheduleAlertAt(10*time.Second, 100)
 	userInput := cli.readLine()
 	cli.PlayerStore.RecordWin(extractWinner(userInput))
 }
