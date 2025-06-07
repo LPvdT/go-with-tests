@@ -21,7 +21,5 @@ func main() {
 	fmt.Println("Let's play poker")
 	fmt.Println("Type {Name} wins to record a win")
 
-	// HACK: Temporary dummy alerter, replace with real implementation if needed
-	dummySpyAlerter := &cli.SpyBlindAlerter{}
-	cli.NewCLI(store, os.Stdin, dummySpyAlerter).PlayPoker()
+	cli.NewCLI(store, os.Stdin, cli.BlindAlerterFunc(cli.StdOutAlerter)).PlayPoker()
 }
