@@ -1,8 +1,12 @@
+-include .env
+
 # Default goal
+.PHONY: help
 .DEFAULT_GOAL := help
 
-.PHONY: help clean run-cli run-webserver production.pack-cli \
-	production.pack-webserver production.pack-all production.pack-matrix
+.PHONY: _check-root help clean run-cli run-webserver production.pack-cli \
+	production.pack-webserver production.pack-target \
+	production.pack-all production.pack-matrix
 
 # Default OS and architecture
 OS ?= $(shell go env GOOS)
@@ -27,8 +31,8 @@ ARCH_LIST := amd64 arm64
 # Matrix targets
 MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST), \
   $(foreach arch,$(ARCH_LIST), \
-    $(addprefix $(BINARY_NAME_WEBSERVER)_,$(os)_$(arch)$(if $(filter $(os),windows),.exe)) \
-    $(addprefix $(BINARY_NAME_CLI)_,$(os)_$(arch)$(if $(filter $(os),windows),.exe)) \
+	$(addprefix $(BINARY_NAME_WEBSERVER)_,$(os)_$(arch)$(if $(filter $(os),windows),.exe)) \
+	$(addprefix $(BINARY_NAME_CLI)_,$(os)_$(arch)$(if $(filter $(os),windows),.exe)) \
   ) \
 )
 MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(binary))
@@ -81,6 +85,11 @@ $(OUTPUT_DIR)/%:
 	$(call build_and_pack,$@)
 
 
+# Recipe for checking the project root
+_check-root:
+	@test -f go.mod || (echo "Please run this Makefile from the project root (go.mod missing)"; exit 1)
+
+
 # Recipe for showing available targets
 help: ## Show available make targets
 	@grep -E '^[a-zA-Z0-9_/.-]+:.*?## .+$$' $(MAKEFILE_LIST) | \
@@ -94,15 +103,15 @@ clean: ## Clean up the output directory
 
 
 # Recipe for running the CLI
-run-cli: ## Run the CLI
-	@echo "[*] Running $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
-	@GOOS=$(OS) GOARCH=$(ARCH) go run $(MAIN_PACKAGE_PATH_CLI)/$(MAIN_GO_FILE)
+run-cli: _check-root ## Run the CLI
+	@echo "[*] Running $(BINARY_NAME_CLI) for $(OS)/$(ARCH)"
+	@GOOS=$(OS) GOARCH=$(ARCH) go run ./$(MAIN_PACKAGE_PATH_CLI)
 
 
 # Recipe for running the webserver
-run-webserver: ## Run the webserver
-	@echo "[*] Running $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
-	@GOOS=$(OS) GOARCH=$(ARCH) go run $(MAIN_PACKAGE_PATH_WEBSERVER)/$(MAIN_GO_FILE)
+run-webserver: _check-root ## Run the webserver
+	@echo "[*] Running $(BINARY_NAME_WEBSERVER) for $(OS)/$(ARCH)"
+	@GOOS=$(OS) GOARCH=$(ARCH) go run ./$(MAIN_PACKAGE_PATH_WEBSERVER)
 
 
 # Recipe for building and packing the webserver
@@ -119,6 +128,13 @@ production.pack-cli: ## Build and pack the CLI binary
 	@echo "[*] Building $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
 	$(call go_build,$(OS),$(ARCH),$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT),$(MAIN_PACKAGE_PATH_CLI))
 	$(call compress_upx,$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT))
+
+
+# Recipe for building and packing the CLI and webserver for a specific OS/ARCH
+.DELETE_ON_ERROR:
+production.pack-target: ## Build and pack the CLI and webserver binaries for a specific OS/ARCH
+	@$(MAKE) $(OUTPUT_DIR)/$(BINARY_NAME_CLI)_$(OS)_$(ARCH)$(if $(filter $(OS),windows),.exe)
+	@$(MAKE) $(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)_$(OS)_$(ARCH)$(if $(filter $(OS),windows),.exe)
 
 
 # Recipe for building and packing the CLI and webserver
