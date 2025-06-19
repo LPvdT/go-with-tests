@@ -18,9 +18,12 @@ func (f BlindAlerterFunc) ScheduleAlertAt(duration time.Duration, amount int) {
 	f(duration, amount)
 }
 
-// StdOutAlerter will schedule alerts and print them to os.Stdout.
+// StdOutAlerter prints the blind amount to standard output with a given duration.
 func StdOutAlerter(duration time.Duration, amount int) {
 	time.AfterFunc(duration, func() {
-		fmt.Fprintf(os.Stdout, "Blind amount: %d\n", amount)
+		_, err := fmt.Fprintf(os.Stdout, "Blind amount: %d\n", amount)
+		if err != nil {
+			panic(err)
+		}
 	})
 }
