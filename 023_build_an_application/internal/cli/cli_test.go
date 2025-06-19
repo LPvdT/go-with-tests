@@ -38,10 +38,10 @@ var (
 func TestCLI(t *testing.T) {
 	t.Run("it schedules the printing of blind values", func(t *testing.T) {
 		in := strings.NewReader("Chris wins\n")
-		playerStore := &playertest.StubPlayerStore{}
 		blindAlerter := &SpyBlindAlerter{}
+		game := mod_cli.NewGame(blindAlerter, dummyPlayerStore)
 
-		cli := mod_cli.NewCLI(playerStore, in, dummyStdOut, blindAlerter)
+		cli := mod_cli.NewCLI(in, dummyStdOut, game)
 		cli.PlayPoker()
 
 		cases := []ScheduledAlert{
@@ -72,30 +72,31 @@ func TestCLI(t *testing.T) {
 
 	t.Run("record chris win from user input", func(t *testing.T) {
 		in := strings.NewReader("Chris wins\n")
-		playerStore := &playertest.StubPlayerStore{}
+		game := mod_cli.NewGame(dummyBlindAlerter, dummyPlayerStore)
 
-		cli := mod_cli.NewCLI(playerStore, in, dummyStdOut, dummyBlindAlerter)
+		cli := mod_cli.NewCLI(in, dummyStdOut, game)
 		cli.PlayPoker()
 
-		playertest.AssertPlayerWin(t, playerStore, "Chris")
+		playertest.AssertPlayerWin(t, dummyPlayerStore, "Chris")
 	})
 
 	t.Run("record cleo win from user input", func(t *testing.T) {
 		in := strings.NewReader("Cleo wins\n")
-		playerStore := &playertest.StubPlayerStore{}
+		game := mod_cli.NewGame(dummyBlindAlerter, dummyPlayerStore)
 
-		cli := mod_cli.NewCLI(playerStore, in, dummyStdOut, dummyBlindAlerter)
+		cli := mod_cli.NewCLI(in, dummyStdOut, game)
 		cli.PlayPoker()
 
-		playertest.AssertPlayerWin(t, playerStore, "Cleo")
+		playertest.AssertPlayerWin(t, dummyPlayerStore, "Cleo")
 	})
 
 	t.Run("it prompts the user to enter the number of players", func(t *testing.T) {
 		stdout := &bytes.Buffer{}
 		in := strings.NewReader("7\n")
 		blindAlerter := &SpyBlindAlerter{}
+		game := mod_cli.NewGame(dummyBlindAlerter, dummyPlayerStore)
 
-		cli := mod_cli.NewCLI(dummyPlayerStore, in, stdout, blindAlerter)
+		cli := mod_cli.NewCLI(in, stdout, game)
 		cli.PlayPoker()
 
 		got := stdout.String()
