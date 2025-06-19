@@ -1,21 +1,26 @@
 # Default goal
 .DEFAULT_GOAL := help
 
+
 ## Config
 MAIN_GO_FILE := main.go
 OUTPUT_DIR := dist
+
 
 # Package paths
 MAIN_PACKAGE_PATH_WEBSERVER := cmd/webserver
 MAIN_PACKAGE_PATH_CLI := cmd/cli
 
+
 # Binary names
 BINARY_NAME_WEBSERVER := http-server
 BINARY_NAME_CLI := cli
 
+
 # Cross-compilation matrix
 OS_LIST := linux darwin windows
 ARCH_LIST := amd64 arm64
+
 
 # Matrix targets
 MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST), \
@@ -26,10 +31,12 @@ MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST), \
 )
 MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(binary))
 
+
 # Detect extension
 EXT := $(if $(filter $(OS),windows),.exe)
 
-# build-and-pack: Internal helper function
+
+# build-and-pack: Internal helper function to build and pack
 define build_and_pack
 	@mkdir -p $(dir $1)
 	@binary_name=$$(basename $1); \
@@ -50,44 +57,76 @@ define build_and_pack
 	fi
 endef
 
+
 # Pattern rule for matrix builds
 $(OUTPUT_DIR)/%:
 	$(call build_and_pack,$@)
 
-# compress-upx: Compress the binary using UPX
-.PHONY: compress-upx
-compress-upx:
-	@if [ "$(OS)" = "darwin" ]; then \
-		upx --best --lzma --force-macos $(FILE) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
-	else \
-		upx --best --lzma $(FILE) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
-	fi
 
+# compress_upx: Compress the binary using UPX
+define compress_upx
+	@echo "[*] Compressing $(1) using UPX"
+	@if [ "$(OS)" = "darwin" ]; then \
+		upx --best --lzma --force-macos $(1) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
+	else \
+		upx --best --lzma $(1) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
+	fi
+endef
+
+
+# Recipe for showing available targets
 .PHONY: help
 help: ## Show available make targets
 	@grep -E '^[a-zA-Z0-9_/.-]+:.*?## .+$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+
+# Recipe for cleaning the output directory
 .PHONY: clean
 clean: ## Clean up the output directory
 	@echo "[*] Cleaning up $(OUTPUT_DIR)"
 	@rm -rf $(OUTPUT_DIR)
 
-.PHONY: production/pack-webserver
+
+# Recipe for running the CLI
+.PHONY: run-cli
+run-cli: ## Run the CLI
+	@echo "[*] Running $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
+	@GOOS=$(OS) GOARCH=$(ARCH) go run $(MAIN_PACKAGE_PATH_CLI)/$(MAIN_GO_FILE)
+
+
+# Recipe for running the webserver
+.PHONY: run-webserver
+run-webserver: ## Run the webserver
+	@echo "[*] Running $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
+	@GOOS=$(OS) GOARCH=$(ARCH) go run $(MAIN_PACKAGE_PATH_WEBSERVER)/$(MAIN_GO_FILE)
+
+
+# Recipe for building and packing the webserver
+.PHONY: production.pack-webserver
+.DELETE_ON_ERROR:
 production.pack-webserver: ## Build and pack the webserver binary
 	@echo "[*] Building $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
 	@GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags='-s' -o=$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT) $(MAIN_PACKAGE_PATH_WEBSERVER)/$(MAIN_GO_FILE)
-	@$(MAKE) compress-upx FILE=$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT)
+	$(call compress_upx,$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT))
 
-.PHONY: production/pack-cli
+
+# Recipe for building and packing the CLI
+.PHONY: production.pack-cli
+.DELETE_ON_ERROR:
 production.pack-cli: ## Build and pack the CLI binary
 	@echo "[*] Building $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
 	@GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags='-s' -o=$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT) $(MAIN_PACKAGE_PATH_CLI)/$(MAIN_GO_FILE)
-	@$(MAKE) compress-upx FILE=$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT)
+	$(call compress_upx,$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT))
 
-.PHONY: production/pack-all
-production.pack-all: production/pack-webserver production/pack-cli ## Build and pack both binaries for local OS/ARCH
 
-.PHONY: production/pack/matrix
+# Recipe for building and packing the CLI and webserver
+.PHONY: production.pack-all
 .DELETE_ON_ERROR:
-production.pack-matrix: $(MATRIX_BINARY_PATHS) ## Cross-compile and pack all OS/ARCH combinations
+production.pack-all: production.pack-webserver production.pack-cli ## Build and pack CLI and webserver binaries for local OS/ARCH
+
+
+# Recipe for cross-compiling and packing the CLI and webserver
+.PHONY: production.pack-matrix
+.DELETE_ON_ERROR:
+production.pack-matrix: clean $(MATRIX_BINARY_PATHS) ## Cross-compile and pack CLI and webserver binaries for all OS/ARCH combinations
