@@ -27,7 +27,7 @@ func (s *SpyBlindAlerter) ScheduleAlertAt(at time.Duration, amount int) {
 	s.alerts = append(s.alerts, ScheduledAlert{at, amount})
 }
 
-var dummySpyAlerter = &SpyBlindAlerter{}
+var dummyBlindAlerter = &SpyBlindAlerter{}
 
 func TestCLI(t *testing.T) {
 	t.Run("it schedules the printing of blind values", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestCLI(t *testing.T) {
 		in := strings.NewReader("Chris wins\n")
 		playerStore := &playertest.StubPlayerStore{}
 
-		cli := cli.NewCLI(playerStore, in, dummySpyAlerter)
+		cli := cli.NewCLI(playerStore, in, dummyBlindAlerter)
 		cli.PlayPoker()
 
 		playertest.AssertPlayerWin(t, playerStore, "Chris")
@@ -78,7 +78,7 @@ func TestCLI(t *testing.T) {
 		in := strings.NewReader("Cleo wins\n")
 		playerStore := &playertest.StubPlayerStore{}
 
-		cli := cli.NewCLI(playerStore, in, dummySpyAlerter)
+		cli := cli.NewCLI(playerStore, in, dummyBlindAlerter)
 		cli.PlayPoker()
 
 		playertest.AssertPlayerWin(t, playerStore, "Cleo")
