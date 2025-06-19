@@ -51,7 +51,6 @@ endef
 
 # compress_upx: Macro to compress the binary using UPX
 define compress_upx
-	echo "[*] Compressing $(1) using UPX for target OS: $(2)"
 	if [ "$(2)" = "darwin" ]; then \
 		upx --best --lzma --force-macos $(1) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
 	else \
@@ -120,14 +119,16 @@ run-webserver: _check-root ## Run the webserver
 # Recipe for building and packing the webserver
 production.pack-webserver: ## Build and pack the webserver binary
 	@echo "[*] Building $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
-	$(call go_build,$(OS),$(ARCH),$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT),$(MAIN_PACKAGE_PATH_WEBSERVER))
+	@$(call go_build,$(OS),$(ARCH),$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT),$(MAIN_PACKAGE_PATH_WEBSERVER))
+	@echo "[*] Compressing $(BINARY_NAME_WEBSERVER) using UPX for target OS: ${OS}/${ARCH}"
 	@$(call compress_upx,$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT),$(OS))
 
 
 # Recipe for building and packing the CLI
 production.pack-cli: ## Build and pack the CLI binary
 	@echo "[*] Building $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
-	$(call go_build,$(OS),$(ARCH),$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT),$(MAIN_PACKAGE_PATH_CLI))
+	@$(call go_build,$(OS),$(ARCH),$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT),$(MAIN_PACKAGE_PATH_CLI))
+	@echo "[*] Compressing $(BINARY_NAME_CLI) using UPX for target OS: ${OS}/${ARCH}"
 	@$(call compress_upx,$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT),$(OS))
 
 
