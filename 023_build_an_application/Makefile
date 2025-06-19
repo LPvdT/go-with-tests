@@ -74,20 +74,20 @@ clean: ## Clean up the output directory
 	@rm -rf $(OUTPUT_DIR)
 
 .PHONY: production/pack-webserver
-production/pack-webserver: ## Build and pack the webserver binary
+production.pack-webserver: ## Build and pack the webserver binary
 	@echo "[*] Building $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
 	@GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags='-s' -o=$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT) $(MAIN_PACKAGE_PATH_WEBSERVER)/$(MAIN_GO_FILE)
 	@$(MAKE) compress-upx FILE=$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT)
 
 .PHONY: production/pack-cli
-production/pack-cli: ## Build and pack the CLI binary
+production.pack-cli: ## Build and pack the CLI binary
 	@echo "[*] Building $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
 	@GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags='-s' -o=$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT) $(MAIN_PACKAGE_PATH_CLI)/$(MAIN_GO_FILE)
 	@$(MAKE) compress-upx FILE=$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT)
 
 .PHONY: production/pack-all
-production/pack-all: production/pack-webserver production/pack-cli ## Build and pack both binaries for local OS/ARCH
+production.pack-all: production/pack-webserver production/pack-cli ## Build and pack both binaries for local OS/ARCH
 
 .PHONY: production/pack/matrix
 .DELETE_ON_ERROR:
-production/pack/matrix: $(MATRIX_BINARY_PATHS) ## Cross-compile and pack all OS/ARCH combinations
+production.pack-matrix: $(MATRIX_BINARY_PATHS) ## Cross-compile and pack all OS/ARCH combinations
