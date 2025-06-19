@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -9,9 +10,12 @@ import (
 	"github.com/LPvdT/go-with-tests/application/internal/server"
 )
 
+const PlayerPrompt = "Please enter the number of players: "
+
 type CLI struct {
 	PlayerStore server.PlayerStore
 	In          bufio.Scanner
+	Out         io.Writer
 	Alerter     BlindAlerter
 }
 
@@ -19,11 +23,17 @@ func NewCLI(store server.PlayerStore, in io.Reader, out io.Writer, alerter Blind
 	return &CLI{
 		PlayerStore: store,
 		In:          *bufio.NewScanner(in),
+		Out:         out,
 		Alerter:     alerter,
 	}
 }
 
 func (cli *CLI) PlayPoker() {
+	_, err := fmt.Fprint(cli.Out, PlayerPrompt)
+	if err != nil {
+		panic(err)
+	}
+
 	cli.scheduleBlindAlerts()
 	userInput := cli.readLine()
 	cli.PlayerStore.RecordWin(extractWinner(userInput))
