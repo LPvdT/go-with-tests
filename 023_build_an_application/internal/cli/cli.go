@@ -2,35 +2,56 @@ package cli
 
 import (
 	"bufio"
+	"fmt"
 	"io"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/LPvdT/go-with-tests/application/internal/server"
 )
 
+const PlayerPrompt = "Please enter the number of players: "
+
 type CLI struct {
-	PlayerStore server.PlayerStore
-	In          bufio.Scanner
-	Alerter     BlindAlerter
+	In   *bufio.Scanner
+	Out  io.Writer
+	Game *Game
 }
 
-func NewCLI(store server.PlayerStore, in io.Reader, alerter BlindAlerter) *CLI {
+func NewCLI(in io.Reader, out io.Writer, game *Game) *CLI {
 	return &CLI{
-		PlayerStore: store,
-		In:          *bufio.NewScanner(in),
-		Alerter:     alerter,
+		In:   bufio.NewScanner(in),
+		Out:  out,
+		Game: game,
+	}
+}
+
+func NewGame(alerter BlindAlerter, store server.PlayerStore) *Game {
+	return &Game{
+		alerter: alerter,
+		store:   store,
 	}
 }
 
 func (cli *CLI) PlayPoker() {
-	cli.Alerter.ScheduleAlertAt(10*time.Second, 100)
-	userInput := cli.readLine()
-	cli.PlayerStore.RecordWin(extractWinner(userInput))
+	_, err := fmt.Fprint(cli.Out, PlayerPrompt)
+	if err != nil {
+		panic(err)
+	}
+
+	numberOfPlayersInput := cli.readLine()
+	numberOfPlayers, _ := strconv.Atoi(strings.Trim(numberOfPlayersInput, "\n"))
+
+	cli.Game.Start(numberOfPlayers)
+
+	winnerInput := cli.readLine()
+	winner := extractWinner(winnerInput)
+
+	cli.Game.Finish(winner)
 }
 
 func extractWinner(userInput string) string {
-	return strings.Replace(userInput, " wins", "", 1)
+	return strings.Replace(userInput, " wins\n", "", 1)
 }
 
 func (cli *CLI) readLine() string {

@@ -1,27 +1,40 @@
+.DELETE_ON_ERROR:
+-include .env
+
 # Default goal
+.PHONY: help
 .DEFAULT_GOAL := help
 
-## Config
+# Phony targets
+.PHONY: _check-root help clean run-cli run-webserver production.pack-cli \
+	production.pack-webserver production.pack-target \
+	production.pack-all production.pack-matrix
+
+# Default OS and architecture
+OS ?= $(shell go env GOOS)
+ARCH ?= $(shell go env GOARCH)
+
+# Go source config
 MAIN_GO_FILE := main.go
 OUTPUT_DIR := dist
 
-# Package paths
+# Package entry points
 MAIN_PACKAGE_PATH_WEBSERVER := cmd/webserver
 MAIN_PACKAGE_PATH_CLI := cmd/cli
 
-# Binary names
+# Binary output names
 BINARY_NAME_WEBSERVER := http-server
 BINARY_NAME_CLI := cli
 
-# Cross-compilation matrix
+# Target platforms (cross-compilation matrix)
 OS_LIST := linux darwin windows
 ARCH_LIST := amd64 arm64
 
 # Matrix targets
 MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST), \
   $(foreach arch,$(ARCH_LIST), \
-    $(addprefix $(BINARY_NAME_WEBSERVER)_,$(os)_$(arch)$(if $(filter $(os),windows),.exe)) \
-    $(addprefix $(BINARY_NAME_CLI)_,$(os)_$(arch)$(if $(filter $(os),windows),.exe)) \
+	$(addprefix $(BINARY_NAME_WEBSERVER)_,$(os)_$(arch)$(if $(filter $(os),windows),.exe)) \
+	$(addprefix $(BINARY_NAME_CLI)_,$(os)_$(arch)$(if $(filter $(os),windows),.exe)) \
   ) \
 )
 MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(binary))
@@ -29,10 +42,28 @@ MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(b
 # Detect extension
 EXT := $(if $(filter $(OS),windows),.exe)
 
-# build-and-pack: Internal helper function
+
+# go_build: Macro to build a binary
+define go_build
+	GOOS=$(1) GOARCH=$(2) go build -ldflags='-s' -o=$(3) $(4)/$(MAIN_GO_FILE)
+endef
+
+
+# compress_upx: Macro to compress the binary using UPX
+define compress_upx
+	echo "[*] Compressing $(1) using UPX for target OS: $(2)"
+	if [ "$(2)" = "darwin" ]; then \
+		upx --best --lzma --force-macos $(1) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
+	else \
+		upx --best --lzma $(1) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
+	fi
+endef
+
+
+# build_and_pack: Macro to build and pack a binary
 define build_and_pack
-	@mkdir -p $(dir $1)
-	@binary_name=$$(basename $1); \
+	mkdir -p $(dir $1)
+	binary_name=$$(basename $1); \
 	noext_name=$${binary_name%%.*}; \
 	os=$$(echo $$noext_name | cut -d'_' -f2); \
 	arch=$$(echo $$noext_name | cut -d'_' -f3); \
@@ -43,51 +74,72 @@ define build_and_pack
 	fi; \
 	echo "[+] - [$$os/$$arch] - Packing $$binary_name ($$package_path/$(MAIN_GO_FILE))..."; \
 	GOOS=$$os GOARCH=$$arch go build -ldflags='-s' -o=$1 $$package_path/$(MAIN_GO_FILE); \
+	echo "[*] Compressing $$binary_name using UPX for target OS: $$os"; \
 	if [ "$$os" = "darwin" ]; then \
-		upx --best --lzma --force-macos $1 || (echo "[*] \033[31m\033[1mUPX failed for $$os/$$arch, skipping...\033[0m"; true); \
+		upx --best --lzma --force-macos $1 || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
 	else \
-		upx --best --lzma $1 || (echo "[*] \033[31m\033[1mUPX failed for $$os/$$arch, skipping...\033[0m"; true); \
+		upx --best --lzma $1 || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
 	fi
 endef
 
+
 # Pattern rule for matrix builds
 $(OUTPUT_DIR)/%:
-	$(call build_and_pack,$@)
+	@$(call build_and_pack,$@)
 
-# compress-upx: Compress the binary using UPX
-.PHONY: compress-upx
-compress-upx:
-	@if [ "$(OS)" = "darwin" ]; then \
-		upx --best --lzma --force-macos $(FILE) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
-	else \
-		upx --best --lzma $(FILE) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
-	fi
 
-.PHONY: help
+# Recipe for checking the project root
+_check-root:
+	@test -f go.mod || (echo "Please run this Makefile from the project root (go.mod missing)"; exit 1)
+
+
+# Recipe for showing available targets
 help: ## Show available make targets
 	@grep -E '^[a-zA-Z0-9_/.-]+:.*?## .+$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: clean
+
+# Recipe for cleaning the output directory
 clean: ## Clean up the output directory
 	@echo "[*] Cleaning up $(OUTPUT_DIR)"
 	@rm -rf $(OUTPUT_DIR)
 
-.PHONY: production/pack-webserver
-production/pack-webserver: ## Build and pack the webserver binary
+
+# Recipe for running the CLI
+run-cli: _check-root ## Run the CLI
+	@echo "[*] Running $(BINARY_NAME_CLI) for $(OS)/$(ARCH)"
+	@GOOS=$(OS) GOARCH=$(ARCH) go run ./$(MAIN_PACKAGE_PATH_CLI)
+
+
+# Recipe for running the webserver
+run-webserver: _check-root ## Run the webserver
+	@echo "[*] Running $(BINARY_NAME_WEBSERVER) for $(OS)/$(ARCH)"
+	@GOOS=$(OS) GOARCH=$(ARCH) go run ./$(MAIN_PACKAGE_PATH_WEBSERVER)
+
+
+# Recipe for building and packing the webserver
+production.pack-webserver: ## Build and pack the webserver binary
 	@echo "[*] Building $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
-	@GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags='-s' -o=$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT) $(MAIN_PACKAGE_PATH_WEBSERVER)/$(MAIN_GO_FILE)
-	@$(MAKE) compress-upx FILE=$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT)
+	$(call go_build,$(OS),$(ARCH),$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT),$(MAIN_PACKAGE_PATH_WEBSERVER))
+	@$(call compress_upx,$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT),$(OS))
 
-.PHONY: production/pack-cli
-production/pack-cli: ## Build and pack the CLI binary
+
+# Recipe for building and packing the CLI
+production.pack-cli: ## Build and pack the CLI binary
 	@echo "[*] Building $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
-	@GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags='-s' -o=$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT) $(MAIN_PACKAGE_PATH_CLI)/$(MAIN_GO_FILE)
-	@$(MAKE) compress-upx FILE=$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT)
+	$(call go_build,$(OS),$(ARCH),$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT),$(MAIN_PACKAGE_PATH_CLI))
+	@$(call compress_upx,$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT),$(OS))
 
-.PHONY: production/pack-all
-production/pack-all: production/pack-webserver production/pack-cli ## Build and pack both binaries for local OS/ARCH
 
-.PHONY: production/pack/matrix
-.DELETE_ON_ERROR:
-production/pack/matrix: $(MATRIX_BINARY_PATHS) ## Cross-compile and pack all OS/ARCH combinations
+# Recipe for building and packing the CLI and webserver for a specific OS/ARCH
+production.pack-target: ## Build and pack the CLI and webserver binaries for a specific OS/ARCH
+	@$(MAKE) $(OUTPUT_DIR)/$(BINARY_NAME_CLI)_$(OS)_$(ARCH)$(if $(filter $(OS),windows),.exe)
+	@$(MAKE) $(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)_$(OS)_$(ARCH)$(if $(filter $(OS),windows),.exe)
+
+
+# Recipe for building and packing the CLI and webserver
+production.pack-all: production.pack-webserver production.pack-cli ## Build and pack CLI and webserver binaries for local OS/ARCH
+
+
+# Recipe for cross-compiling and packing the CLI and webserver
+production.pack-matrix: clean $(MATRIX_BINARY_PATHS) ## Cross-compile and pack CLI and webserver binaries for all OS/ARCH combinations

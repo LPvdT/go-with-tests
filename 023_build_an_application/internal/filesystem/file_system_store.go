@@ -32,8 +32,11 @@ func NewFileSystemPlayerStore(file *os.File) (*FileSystemPlayerStore, error) {
 		return nil, fmt.Errorf("problem loading league from file %s, %v", file.Name(), err)
 	}
 
+	encoder := json.NewEncoder(&common.Tape{File: file})
+	encoder.SetIndent("", "\t")
+
 	return &FileSystemPlayerStore{
-		Database: json.NewEncoder(&common.Tape{File: file}),
+		Database: encoder,
 		league:   league,
 	}, nil
 }
@@ -110,9 +113,7 @@ func FileSystemPlayerStoreFromFile(path string) (*FileSystemPlayerStore, func(),
 		return nil, nil, fmt.Errorf("problem opening %s %v", path, err)
 	}
 
-	closeFunc := func() {
-		db.Close()
-	}
+	closeFunc := func() { _ = db.Close() }
 
 	store, err := NewFileSystemPlayerStore(db)
 	if err != nil {
