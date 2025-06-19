@@ -35,7 +35,7 @@ func (cli *CLI) scheduleBlindAlerts() {
 
 	for _, blind := range blinds {
 		cli.Alerter.ScheduleAlertAt(blindTime, blind)
-		blindTime = blindTime + 5*time.Second // 5 seconds between each blind to speed up the game
+		blindTime = blindTime + 10*time.Minute
 	}
 }
 
