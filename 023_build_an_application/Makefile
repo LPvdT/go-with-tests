@@ -1,6 +1,9 @@
 # Default goal
 .DEFAULT_GOAL := help
 
+.PHONY: help clean run-cli run-webserver production.pack-cli \
+	production.pack-webserver production.pack-all production.pack-matrix
+
 # Default OS and architecture
 OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
@@ -79,35 +82,30 @@ $(OUTPUT_DIR)/%:
 
 
 # Recipe for showing available targets
-.PHONY: help
 help: ## Show available make targets
 	@grep -E '^[a-zA-Z0-9_/.-]+:.*?## .+$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 
 # Recipe for cleaning the output directory
-.PHONY: clean
 clean: ## Clean up the output directory
 	@echo "[*] Cleaning up $(OUTPUT_DIR)"
 	@rm -rf $(OUTPUT_DIR)
 
 
 # Recipe for running the CLI
-.PHONY: run-cli
 run-cli: ## Run the CLI
 	@echo "[*] Running $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
 	@GOOS=$(OS) GOARCH=$(ARCH) go run $(MAIN_PACKAGE_PATH_CLI)/$(MAIN_GO_FILE)
 
 
 # Recipe for running the webserver
-.PHONY: run-webserver
 run-webserver: ## Run the webserver
 	@echo "[*] Running $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
 	@GOOS=$(OS) GOARCH=$(ARCH) go run $(MAIN_PACKAGE_PATH_WEBSERVER)/$(MAIN_GO_FILE)
 
 
 # Recipe for building and packing the webserver
-.PHONY: production.pack-webserver
 .DELETE_ON_ERROR:
 production.pack-webserver: ## Build and pack the webserver binary
 	@echo "[*] Building $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
@@ -116,7 +114,6 @@ production.pack-webserver: ## Build and pack the webserver binary
 
 
 # Recipe for building and packing the CLI
-.PHONY: production.pack-cli
 .DELETE_ON_ERROR:
 production.pack-cli: ## Build and pack the CLI binary
 	@echo "[*] Building $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
@@ -125,12 +122,10 @@ production.pack-cli: ## Build and pack the CLI binary
 
 
 # Recipe for building and packing the CLI and webserver
-.PHONY: production.pack-all
 .DELETE_ON_ERROR:
 production.pack-all: production.pack-webserver production.pack-cli ## Build and pack CLI and webserver binaries for local OS/ARCH
 
 
 # Recipe for cross-compiling and packing the CLI and webserver
-.PHONY: production.pack-matrix
 .DELETE_ON_ERROR:
 production.pack-matrix: clean $(MATRIX_BINARY_PATHS) ## Cross-compile and pack CLI and webserver binaries for all OS/ARCH combinations
