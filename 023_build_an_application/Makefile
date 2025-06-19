@@ -1,4 +1,5 @@
 -include .env
+.DELETE_ON_ERROR:
 
 # Default goal
 .PHONY: help
@@ -116,31 +117,28 @@ run-webserver: _check-root ## Run the webserver
 
 
 # Recipe for building and packing the webserver
-.DELETE_ON_ERROR:
 production.pack-webserver: ## Build and pack the webserver binary
 	@echo "[*] Building $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
 	$(call go_build,$(OS),$(ARCH),$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT),$(MAIN_PACKAGE_PATH_WEBSERVER))
 	@$(call compress_upx,$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT),$(OS))
 
+
 # Recipe for building and packing the CLI
-.DELETE_ON_ERROR:
 production.pack-cli: ## Build and pack the CLI binary
 	@echo "[*] Building $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
 	$(call go_build,$(OS),$(ARCH),$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT),$(MAIN_PACKAGE_PATH_CLI))
 	@$(call compress_upx,$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT),$(OS))
 
+
 # Recipe for building and packing the CLI and webserver for a specific OS/ARCH
-.DELETE_ON_ERROR:
 production.pack-target: ## Build and pack the CLI and webserver binaries for a specific OS/ARCH
 	@$(MAKE) $(OUTPUT_DIR)/$(BINARY_NAME_CLI)_$(OS)_$(ARCH)$(if $(filter $(OS),windows),.exe)
 	@$(MAKE) $(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)_$(OS)_$(ARCH)$(if $(filter $(OS),windows),.exe)
 
 
 # Recipe for building and packing the CLI and webserver
-.DELETE_ON_ERROR:
 production.pack-all: production.pack-webserver production.pack-cli ## Build and pack CLI and webserver binaries for local OS/ARCH
 
 
 # Recipe for cross-compiling and packing the CLI and webserver
-.DELETE_ON_ERROR:
 production.pack-matrix: clean $(MATRIX_BINARY_PATHS) ## Cross-compile and pack CLI and webserver binaries for all OS/ARCH combinations
