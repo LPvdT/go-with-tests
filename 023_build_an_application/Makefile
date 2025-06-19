@@ -47,6 +47,17 @@ define go_build
 endef
 
 
+# compress_upx: Macro to compress the binary using UPX
+define compress_upx
+	@echo "[*] Compressing $(1) using UPX for target OS: $(2)"
+	@if [ "$(2)" = "darwin" ]; then \
+		upx --best --lzma --force-macos $(1) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
+	else \
+		upx --best --lzma $(1) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
+	fi
+endef
+
+
 # build_and_pack: Macro to build and pack a binary
 define build_and_pack
 	@mkdir -p $(dir $1)
@@ -61,22 +72,7 @@ define build_and_pack
 	fi; \
 	echo "[+] - [$$os/$$arch] - Packing $$binary_name ($$package_path/$(MAIN_GO_FILE))..."; \
 	GOOS=$$os GOARCH=$$arch go build -ldflags='-s' -o=$1 $$package_path/$(MAIN_GO_FILE); \
-	if [ "$$os" = "darwin" ]; then \
-		upx --best --lzma --force-macos $1 || (echo "[*] \033[31m\033[1mUPX failed for $$os/$$arch, skipping...\033[0m"; true); \
-	else \
-		upx --best --lzma $1 || (echo "[*] \033[31m\033[1mUPX failed for $$os/$$arch, skipping...\033[0m"; true); \
-	fi
-endef
-
-
-# compress_upx: Macro to compress the binary using UPX
-define compress_upx
-	@echo "[*] Compressing $(1) using UPX"
-	@if [ "$(OS)" = "darwin" ]; then \
-		upx --best --lzma --force-macos $(1) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
-	else \
-		upx --best --lzma $(1) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
-	fi
+	$(call compress_upx,$1)
 endef
 
 
