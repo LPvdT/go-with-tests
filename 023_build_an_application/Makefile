@@ -1,10 +1,11 @@
--include .env
 .DELETE_ON_ERROR:
+-include .env
 
 # Default goal
 .PHONY: help
 .DEFAULT_GOAL := help
 
+# Phony targets
 .PHONY: _check-root help clean run-cli run-webserver production.pack-cli \
 	production.pack-webserver production.pack-target \
 	production.pack-all production.pack-matrix
