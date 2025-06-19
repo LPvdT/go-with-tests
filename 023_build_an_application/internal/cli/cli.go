@@ -13,19 +13,23 @@ import (
 const PlayerPrompt = "Please enter the number of players: "
 
 type CLI struct {
-	In   bufio.Scanner
+	In   *bufio.Scanner
 	Out  io.Writer
 	Game *Game
 }
 
-func NewCLI(store server.PlayerStore, in io.Reader, out io.Writer, alerter BlindAlerter) *CLI {
+func NewCLI(in io.Reader, out io.Writer, game *Game) *CLI {
 	return &CLI{
-		In:  *bufio.NewScanner(in),
-		Out: out,
-		Game: &Game{
-			alerter: alerter,
-			store:   store,
-		},
+		In:   bufio.NewScanner(in),
+		Out:  out,
+		Game: game,
+	}
+}
+
+func NewGame(alerter BlindAlerter, store server.PlayerStore) *Game {
+	return &Game{
+		alerter: alerter,
+		store:   store,
 	}
 }
 
