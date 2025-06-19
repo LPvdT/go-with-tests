@@ -110,9 +110,7 @@ func FileSystemPlayerStoreFromFile(path string) (*FileSystemPlayerStore, func(),
 		return nil, nil, fmt.Errorf("problem opening %s %v", path, err)
 	}
 
-	closeFunc := func() {
-		db.Close()
-	}
+	closeFunc := func() { _ = db.Close() }
 
 	store, err := NewFileSystemPlayerStore(db)
 	if err != nil {
