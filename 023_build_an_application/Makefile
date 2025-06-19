@@ -1,26 +1,25 @@
 # Default goal
 .DEFAULT_GOAL := help
 
+# Default OS and architecture
+OS ?= $(shell go env GOOS)
+ARCH ?= $(shell go env GOARCH)
 
-## Config
+# Go source config
 MAIN_GO_FILE := main.go
 OUTPUT_DIR := dist
 
-
-# Package paths
+# Package entry points
 MAIN_PACKAGE_PATH_WEBSERVER := cmd/webserver
 MAIN_PACKAGE_PATH_CLI := cmd/cli
 
-
-# Binary names
+# Binary output names
 BINARY_NAME_WEBSERVER := http-server
 BINARY_NAME_CLI := cli
 
-
-# Cross-compilation matrix
+# Target platforms (cross-compilation matrix)
 OS_LIST := linux darwin windows
 ARCH_LIST := amd64 arm64
-
 
 # Matrix targets
 MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST), \
@@ -31,12 +30,17 @@ MATRIX_BINARY_NAMES := $(foreach os,$(OS_LIST), \
 )
 MATRIX_BINARY_PATHS := $(foreach binary,$(MATRIX_BINARY_NAMES),$(OUTPUT_DIR)/$(binary))
 
-
 # Detect extension
 EXT := $(if $(filter $(OS),windows),.exe)
 
 
-# build-and-pack: Internal helper function to build and pack
+# go_build: Macro to build a binary
+define go_build
+	GOOS=$(1) GOARCH=$(2) go build -ldflags='-s' -o=$(3) $(4)/$(MAIN_GO_FILE)
+endef
+
+
+# build_and_pack: Macro to build and pack a binary
 define build_and_pack
 	@mkdir -p $(dir $1)
 	@binary_name=$$(basename $1); \
@@ -58,12 +62,7 @@ define build_and_pack
 endef
 
 
-# Pattern rule for matrix builds
-$(OUTPUT_DIR)/%:
-	$(call build_and_pack,$@)
-
-
-# compress_upx: Compress the binary using UPX
+# compress_upx: Macro to compress the binary using UPX
 define compress_upx
 	@echo "[*] Compressing $(1) using UPX"
 	@if [ "$(OS)" = "darwin" ]; then \
@@ -72,6 +71,11 @@ define compress_upx
 		upx --best --lzma $(1) || (echo "[*] \033[31m\033[1mUPX failed, skipping...\033[0m"; true); \
 	fi
 endef
+
+
+# Pattern rule for matrix builds
+$(OUTPUT_DIR)/%:
+	$(call build_and_pack,$@)
 
 
 # Recipe for showing available targets
@@ -107,7 +111,7 @@ run-webserver: ## Run the webserver
 .DELETE_ON_ERROR:
 production.pack-webserver: ## Build and pack the webserver binary
 	@echo "[*] Building $(BINARY_NAME_WEBSERVER) for ${OS}/${ARCH}"
-	@GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags='-s' -o=$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT) $(MAIN_PACKAGE_PATH_WEBSERVER)/$(MAIN_GO_FILE)
+	$(call go_build,$(OS),$(ARCH),$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT),$(MAIN_PACKAGE_PATH_WEBSERVER))
 	$(call compress_upx,$(OUTPUT_DIR)/$(BINARY_NAME_WEBSERVER)$(EXT))
 
 
@@ -116,7 +120,7 @@ production.pack-webserver: ## Build and pack the webserver binary
 .DELETE_ON_ERROR:
 production.pack-cli: ## Build and pack the CLI binary
 	@echo "[*] Building $(BINARY_NAME_CLI) for ${OS}/${ARCH}"
-	@GOOS=$(OS) GOARCH=$(ARCH) go build -ldflags='-s' -o=$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT) $(MAIN_PACKAGE_PATH_CLI)/$(MAIN_GO_FILE)
+	$(call go_build,$(OS),$(ARCH),$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT),$(MAIN_PACKAGE_PATH_CLI))
 	$(call compress_upx,$(OUTPUT_DIR)/$(BINARY_NAME_CLI)$(EXT))
 
 
