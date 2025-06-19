@@ -15,7 +15,7 @@ type CLI struct {
 	Alerter     BlindAlerter
 }
 
-func NewCLI(store server.PlayerStore, in io.Reader, alerter BlindAlerter) *CLI {
+func NewCLI(store server.PlayerStore, in io.Reader, out io.Writer, alerter BlindAlerter) *CLI {
 	return &CLI{
 		PlayerStore: store,
 		In:          *bufio.NewScanner(in),
