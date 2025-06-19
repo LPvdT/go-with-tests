@@ -17,11 +17,6 @@ type SpyBlindAlerter struct {
 	}
 }
 
-// type failOnEndReader struct {
-// 	t   *testing.T
-// 	rdr io.Reader
-// }
-
 func (s *SpyBlindAlerter) ScheduleAlertAt(duration time.Duration, amount int) {
 	s.Alerts = append(s.Alerts, struct {
 		scheduledAt time.Duration
@@ -97,15 +92,4 @@ func TestCLI(t *testing.T) {
 
 		playertest.AssertPlayerWin(t, playerStore, "Cleo")
 	})
-
-	// t.Run("do not read beyond the first newline", func(t *testing.T) {
-	// 	in := failOnEndReader{
-	// 		t,
-	// 		strings.NewReader("Chris winds\n hello there"),
-	// 	}
-	// 	playerStore := &playertest.StubPlayerStore{}
-
-	// 	cli := cli.NewCLI(playerStore, in, dummySpyAlerter)
-	// 	cli.PlayPoker()
-	// })
 }
