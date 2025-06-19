@@ -24,15 +24,18 @@ func NewCLI(store server.PlayerStore, in io.Reader, alerter BlindAlerter) *CLI {
 }
 
 func (cli *CLI) PlayPoker() {
+	cli.scheduleBlindAlerts()
+	userInput := cli.readLine()
+	cli.PlayerStore.RecordWin(extractWinner(userInput))
+}
+
+func (cli *CLI) scheduleBlindAlerts() {
 	blinds := []int{100, 200, 300, 400, 500, 600, 800, 1000, 2000, 4000, 8000}
 	blindTime := 0 * time.Second
 	for _, blind := range blinds {
 		cli.Alerter.ScheduleAlertAt(blindTime, blind)
 		blindTime = blindTime + 10*time.Minute
 	}
-
-	userInput := cli.readLine()
-	cli.PlayerStore.RecordWin(extractWinner(userInput))
 }
 
 func extractWinner(userInput string) string {
