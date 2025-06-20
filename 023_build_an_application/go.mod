@@ -8,4 +8,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20
 )
 
-require golang.org/x/sys v0.33.0 // indirect
+require (
+	github.com/goforj/godump v1.2.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+)
