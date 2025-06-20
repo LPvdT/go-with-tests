@@ -33,3 +33,4 @@ go.work.sum
 # Miscellaneous
 .task/
 todo.md
+*.html
