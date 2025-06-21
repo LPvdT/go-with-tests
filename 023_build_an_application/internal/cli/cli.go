@@ -6,8 +6,6 @@ import (
 	"io"
 	"strconv"
 	"strings"
-
-	"github.com/LPvdT/go-with-tests/application/internal/server"
 )
 
 const PlayerPrompt = "Please enter the number of players: "
@@ -26,18 +24,8 @@ func NewCLI(in io.Reader, out io.Writer, game *Game) *CLI {
 	}
 }
 
-func NewGame(alerter BlindAlerter, store server.PlayerStore) *Game {
-	return &Game{
-		alerter: alerter,
-		store:   store,
-	}
-}
-
 func (cli *CLI) PlayPoker() {
-	_, err := fmt.Fprint(cli.Out, PlayerPrompt)
-	if err != nil {
-		panic(err)
-	}
+	fmt.Fprint(cli.Out, PlayerPrompt)
 
 	numberOfPlayersInput := cli.readLine()
 	numberOfPlayers, _ := strconv.Atoi(strings.Trim(numberOfPlayersInput, "\n"))
