@@ -21,16 +21,17 @@ const (
 	htmlDump     = true  // Set to true to write the game state dump to an HTML file
 )
 
-var dumpState = fmt.Sprintf("no-dump-game-state%v", func() string {
-	if !htmlDump {
-		return "-html"
-	}
-	return ""
-}())
+var (
+	logger    = slog.Default()
+	dumpState = fmt.Sprintf("no-dump-game-state%v", func() string {
+		if !htmlDump {
+			return "-html"
+		}
+		return ""
+	}())
+)
 
 func main() {
-	logger := slog.Default()
-
 	logger.Debug("Loading player store", "filename", dbFileName)
 	store, close, err := filesystem.FileSystemPlayerStoreFromFile(dbFileName)
 	if err != nil {
@@ -47,15 +48,16 @@ func main() {
 	game := cli.NewGame(cli.BlindAlerterFunc(cli.StdOutAlerter), store)
 	cli := cli.NewCLI(os.Stdin, os.Stdout, game)
 
-	if printDump {
-		logger.Warn("Dumping game state", "sink", "stdout")
-		godump.Dump(game)
-	} else {
-		logger.Error("Not dumping game state to console",
-			tint.Err(errors.New(dumpState)), "sink", "stdout",
-		)
-	}
+	checkDumpStdout(game)
+	checkDumpHtml(game)
 
+	cli.PlayPoker()
+}
+
+// checkDumpHtml dumps the game state to an HTML file if htmlDump is set to true.
+//
+// Logs a warning when the dump is successful, or an error if dumping is skipped.
+func checkDumpHtml(game *cli.Game) {
 	if htmlDump {
 		logger.Warn("Dumping game state to HTML file...", "filename", htmlDumpName)
 
@@ -64,7 +66,7 @@ func main() {
 		f, _ := os.OpenFile(htmlDumpName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 		defer f.Close()
 
-		_, err = f.Write([]byte(html))
+		_, err := f.Write([]byte(html))
 		if err != nil {
 			panic(err)
 		}
@@ -73,6 +75,18 @@ func main() {
 			tint.Err(errors.New(dumpState)), "filename", htmlDumpName,
 		)
 	}
+}
 
-	cli.PlayPoker()
+// checkDumpStdout dumps the game state to stdout if printDump is set to true.
+//
+// Logs a warning when the dump is successful, or an error if dumping is skipped.
+func checkDumpStdout(game *cli.Game) {
+	if printDump {
+		logger.Warn("Dumping game state", "sink", "stdout")
+		godump.Dump(game)
+	} else {
+		logger.Error("Not dumping game state to console",
+			tint.Err(errors.New(dumpState)), "sink", "stdout",
+		)
+	}
 }
