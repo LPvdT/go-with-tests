@@ -62,19 +62,6 @@ func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetPlayerScore returns the score for a given player, or an empty string if the
-// player is unknown.
-func GetPlayerScore(name string) string {
-	switch name {
-	case "Pepper":
-		return "20"
-	case "Floyd":
-		return "10"
-	default:
-		return ""
-	}
-}
-
 // showScore writes the score of the specified player to the response writer.
 // If the player's score is not found, it responds with a 404 status code.
 func (p *PlayerServer) showScore(w http.ResponseWriter, player string) {
