@@ -33,7 +33,7 @@ func NewFileSystemPlayerStore(file *os.File) (*FileSystemPlayerStore, error) {
 	}
 
 	encoder := json.NewEncoder(&common.Tape{File: file})
-	encoder.SetIndent("", "\t")
+	encoder.SetIndent("", "  ")
 
 	return &FileSystemPlayerStore{
 		Database: encoder,

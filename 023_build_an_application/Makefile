@@ -104,6 +104,24 @@ clean: ## Clean up the output directory
 	@rm -rf $(OUTPUT_DIR)
 
 
+# Recipe for running tests
+test: _check-root ## Run tests
+	@echo "[*] Running tests"
+	@go test ./... -v
+
+
+# Recipe for running tests with coverage
+test-coverage: _check-root ## Run tests with coverage
+	@echo "[*] Running tests with coverage"
+	@if go test -v ./... -coverprofile=coverage.out -covermode=atomic; then \
+		echo "[*] All tests passed"; \
+	else \
+		echo "[*] \033[31m\033[1mNot all tests passed!\033[0m"; \
+	fi || true
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "[*] Coverage report generated at coverage.html"
+
+
 # Recipe for running the CLI
 run-cli: _check-root ## Run the CLI
 	@echo "[*] Running $(BINARY_NAME_CLI) for $(OS)/$(ARCH)"
