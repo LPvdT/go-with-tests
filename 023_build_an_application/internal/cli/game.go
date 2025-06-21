@@ -11,6 +11,13 @@ type Game struct {
 	store   server.PlayerStore
 }
 
+func NewGame(alerter BlindAlerter, store server.PlayerStore) *Game {
+	return &Game{
+		alerter: alerter,
+		store:   store,
+	}
+}
+
 func (p *Game) Start(numberOfPlayers int) {
 	blindIncrement := time.Duration(5+numberOfPlayers) * time.Minute
 
