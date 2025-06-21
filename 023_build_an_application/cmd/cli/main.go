@@ -17,8 +17,8 @@ import (
 const (
 	dbFileName   = "game.db.json"
 	htmlDumpName = "game_dump.html"
-	printDump    = true // Set to true to print the game state dump to the console
-	htmlDump     = true // Set to true to write the game state dump to an HTML file
+	printDump    = false // Set to true to print the game state dump to the console
+	htmlDump     = true  // Set to true to write the game state dump to an HTML file
 )
 
 var dumpState = fmt.Sprintf("no-dump-game-state%v", func() string {
@@ -39,7 +39,10 @@ func main() {
 	defer close()
 
 	logger.Info("Let's play poker")
-	logger.Info("Type <name> wins to record a win", "example", "Teun wins")
+	logger.Info(
+		"Type <name> wins to record a win",
+		"<name>", "Teun", "<name>", "Teun wins",
+	)
 
 	game := cli.NewGame(cli.BlindAlerterFunc(cli.StdOutAlerter), store)
 	cli := cli.NewCLI(os.Stdin, os.Stdout, game)
@@ -48,7 +51,9 @@ func main() {
 		logger.Warn("Dumping game state", "sink", "stdout")
 		godump.Dump(game)
 	} else {
-		logger.Error("Not dumping game state to console", tint.Err(errors.New(dumpState)), "sink", "stdout")
+		logger.Error("Not dumping game state to console",
+			tint.Err(errors.New(dumpState)), "sink", "stdout",
+		)
 	}
 
 	if htmlDump {
@@ -64,7 +69,9 @@ func main() {
 			panic(err)
 		}
 	} else {
-		logger.Error("Not dumping game state to HTML file", tint.Err(errors.New(dumpState)), "filename", htmlDumpName)
+		logger.Error("Not dumping game state to HTML file",
+			tint.Err(errors.New(dumpState)), "filename", htmlDumpName,
+		)
 	}
 
 	cli.PlayPoker()
