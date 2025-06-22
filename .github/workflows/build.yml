@@ -28,16 +28,6 @@ jobs:
     - name: Display Go version
       run: go version
 
-    - name: Cache Go dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles(format('{0}/go.sum', inputs.project-dir)) }}
-        restore-keys: |
-          ${{ runner.os }}-go-${{ matrix.go-version }}-
-
     - name: Install dependencies
       run: go get -v ./...
       working-directory: ${{ inputs.project-dir }}
