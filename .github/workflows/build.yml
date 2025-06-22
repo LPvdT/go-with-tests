@@ -1,71 +1,83 @@
 name: build
 
 on:
-  pull_request:
-    branches: ['main']
-  workflow_dispatch:
-
-env:
-  PROJECT_DIR: ./023_build_an_application
+  workflow_call:
+    inputs:
+      project-dir:
+        required: true
+        type: string
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         go-version: ['1.23.x', '1.24.x']
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: 'Set up Go: ${{ matrix.go-version }}'
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ matrix.go-version }}
-          cache-dependency-path: go.mod
+    - name: Set up Go ${{ matrix.go-version }}
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+        cache: true
 
-      - name: Display Go version
-        run: go version
+    - name: Display Go version
+      run: go version
 
-      - name: Change directory
-        run: |
-          echo "Changing directory to: ${{ env.PROJECT_DIR }}" && \
-          cd ${{ env.PROJECT_DIR }}
+    - name: Cache Go dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles(format('{0}/go.sum', inputs.project-dir)) }}
+        restore-keys: |
+          ${{ runner.os }}-go-${{ matrix.go-version }}-
 
-      - name: Install dependencies
-        run: go get -v .
+    - name: Install dependencies
+      run: go get -v ./...
+      working-directory: ${{ inputs.project-dir }}
 
-      - name: Cache Go dependencies
-        id: cache-go-deps
-        uses: actions/cache@v4
-        with:
-          path: go.mod
-          key: |
-            ${{ runner.os }}-go-${{ matrix.go-version }}-deps
-          restore-keys: |
-            ${{ runner.os }}-go-${{ matrix.go-version }}-deps
+    - name: Run tests
+      run: |
+        if [ "${{ env.ALLOW_TEST_FAILURE }}" = "true" ]; then
+          make test || echo "Tests failed, continuing because ALLOW_TEST_FAILURE is true."
+        else
+          make test
+        fi
+      working-directory: ${{ inputs.project-dir }}
+      env:
+        ALLOW_TEST_FAILURE: false
 
-      - name: Test
-        run: make test
+    - name: Generate test coverage
+      env:
+        COV_OUTPUT: ${{ matrix.go-version }}-coverage.out
+        COV_HTML_OUTPUT: ${{ matrix.go-version }}-coverage.html
+      run: make test-coverage
+      working-directory: ${{ inputs.project-dir }}
 
-      - name: Test coverage
-        env:
-          COV_OUTPUT: ${{matrix.go-version}}-coverage.out
-          COV_HTML_OUTPUT: ${{matrix.go-version}}-coverage.html
-        run: make test-coverage
+    - name: Upload HTML coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.go-version }}-coverage-report
+        path: ${{ inputs.project-dir }}/${{ matrix.go-version }}-coverage.html
 
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.go-version }}-coverage-report
-          path: ${{ matrix.go-version }}-coverage.html
+    - name: Upload raw coverage file
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.go-version }}-coverage-raw
+        path: ${{ inputs.project-dir }}/${{ matrix.go-version }}-coverage.out
 
-      - name: Cross compile and pack
-        run: make production.pack-matrix
+    - name: Cross compile and pack
+      run: make production.pack-matrix
+      working-directory: ${{ inputs.project-dir }}
 
-      - name: Upload binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifacts
-          path: dist/*
+    - name: Upload built artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: artifacts-${{ matrix.go-version }}
+        path: ${{ inputs.project-dir }}/dist/*
