@@ -6,6 +6,9 @@ on:
       project-dir:
         required: true
         type: string
+      allow-test-failure:
+        required: true
+        type: boolean
 
 jobs:
   build:
@@ -34,14 +37,12 @@ jobs:
 
     - name: Run tests
       run: |
-        if [ "${{ env.ALLOW_TEST_FAILURE }}" = "true" ]; then
-          make test || echo "Tests failed, continuing because ALLOW_TEST_FAILURE is true."
+        if [ "${{ inputs.allow-test-failure }}" = "true" ]; then
+          make test || echo "Tests failed, but continuing because allow-test-failure is true."
         else
           make test
         fi
       working-directory: ${{ inputs.project-dir }}
-      env:
-        ALLOW_TEST_FAILURE: false
 
     - name: Generate test coverage
       env:

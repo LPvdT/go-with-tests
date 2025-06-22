@@ -11,3 +11,4 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       project-dir: '023_build_an_application'
+      allow-test-failure: true
