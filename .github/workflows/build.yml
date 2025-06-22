@@ -4,8 +4,15 @@ on:
   workflow_call:
     inputs:
       project-dir:
+        description: Directory of the Go project to build and test
         required: true
         type: string
+      allow-test-failure:
+        description: |
+          If set to true, the workflow will continue even if tests fail.
+          This is useful for development purposes but should be false in production builds.
+        required: true
+        type: boolean
 
 jobs:
   build:
@@ -13,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: ['1.23.x', '1.24.x']
+        go-version: [1.23.x, 1.24.x]
 
     steps:
     - name: Checkout
@@ -34,14 +41,12 @@ jobs:
 
     - name: Run tests
       run: |
-        if [ "${{ env.ALLOW_TEST_FAILURE }}" = "true" ]; then
-          make test || echo "Tests failed, continuing because ALLOW_TEST_FAILURE is true."
+        if [ "${{ inputs.allow-test-failure }}" = "true" ]; then
+          make test || echo "Tests failed, but continuing because allow-test-failure is true."
         else
           make test
         fi
       working-directory: ${{ inputs.project-dir }}
-      env:
-        ALLOW_TEST_FAILURE: false
 
     - name: Generate test coverage
       env:
