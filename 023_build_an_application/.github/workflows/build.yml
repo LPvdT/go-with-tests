@@ -1,0 +1,71 @@
+name: build
+
+on:
+  pull_request:
+    branches: ['main']
+  workflow_dispatch:
+
+env:
+  PROJECT_DIR: ./023_build_an_application
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.23.x', '1.24.x']
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: 'Set up Go: ${{ matrix.go-version }}'
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache-dependency-path: go.mod
+
+      - name: Display Go version
+        run: go version
+
+      - name: Install dependencies
+        run: go get -v .
+
+      - name: Cache Go dependencies
+        id: cache-go-deps
+        uses: actions/cache@v4
+        with:
+          path: go.mod
+          key: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}-deps
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}-deps
+
+      - name: Change directory
+        run: |
+          echo "Changing directory to: ${{ env.PROJECT_DIR }}" && \
+          cd ${{ env.PROJECT_DIR }}
+
+      - name: Test
+        run: make test
+
+      - name: Test coverage
+        env:
+          COV_OUTPUT: ${{matrix.go-version}}-coverage.out
+          COV_HTML_OUTPUT: ${{matrix.go-version}}-coverage.html
+        run: make test-coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.go-version }}-coverage-report
+          path: ${{ matrix.go-version }}-coverage.html
+
+      - name: Cross compile and pack
+        run: make production.pack-matrix
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: dist/*
