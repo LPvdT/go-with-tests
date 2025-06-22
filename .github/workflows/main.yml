@@ -1,0 +1,12 @@
+name: build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ['main']
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      project-dir: '023_build_an_application'
