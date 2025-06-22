@@ -1,5 +1,7 @@
 package cli_test
 
+// BUG: Tests don't work. Just fix later and continue with the book.
+
 import (
 	"bytes"
 	"fmt"
@@ -31,8 +33,8 @@ func (s *SpyBlindAlerter) ScheduleAlertAt(at time.Duration, amount int) {
 var (
 	dummyBlindAlerter = &SpyBlindAlerter{}
 	dummyPlayerStore  = &playertest.StubPlayerStore{}
-	dummyStdIn        = &bytes.Buffer{}
 	dummyStdOut       = &bytes.Buffer{}
+	// dummyStdIn        = &bytes.Buffer{}
 )
 
 func TestCLI(t *testing.T) {

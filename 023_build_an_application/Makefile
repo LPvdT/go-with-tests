@@ -13,6 +13,8 @@
 # Default OS and architecture
 OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
+COV_OUTPUT ?= coverage.out
+COV_HTML_OUTPUT ?= coverage.html
 
 # Go source config
 MAIN_GO_FILE := main.go
@@ -113,13 +115,13 @@ test: _check-root ## Run tests
 # Recipe for running tests with coverage
 test-coverage: _check-root ## Run tests with coverage
 	@echo "[*] Running tests with coverage"
-	@if go test -v ./... -coverprofile=coverage.out -covermode=atomic; then \
+	@if go test -v ./... -coverprofile=${COV_OUTPUT} -covermode=atomic; then \
 		echo "[*] All tests passed"; \
 	else \
 		echo "[*] \033[31m\033[1mNot all tests passed!\033[0m"; \
 	fi || true
-	@go tool cover -html=coverage.out -o coverage.html
-	@echo "[*] Coverage report generated at coverage.html"
+	@go tool cover -html=${COV_OUTPUT} -o ${COV_HTML_OUTPUT}
+	@echo "[*] Coverage report generated at ${COV_HTML_OUTPUT}"
 
 
 # Recipe for running the CLI
