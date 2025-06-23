@@ -6,14 +6,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/LPvdT/go-with-tests/application/internal/common"
+	"github.com/LPvdT/go-with-tests/application/common"
 	"github.com/LPvdT/go-with-tests/application/internal/filesystem"
-	"github.com/LPvdT/go-with-tests/application/playertest"
-	"github.com/LPvdT/go-with-tests/application/testutils"
 )
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	database, cleanDatabase := testutils.CreateTempFile(t, `[]`)
+	database, cleanDatabase := common.CreateTempFile(t, `[]`)
 	defer cleanDatabase()
 
 	store := &filesystem.FileSystemPlayerStore{
@@ -23,27 +21,27 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	server := NewPlayerServer(store)
 	player := "Pepper"
 
-	server.ServeHTTP(httptest.NewRecorder(), playertest.NewPostWinRequest(player))
-	server.ServeHTTP(httptest.NewRecorder(), playertest.NewPostWinRequest(player))
-	server.ServeHTTP(httptest.NewRecorder(), playertest.NewPostWinRequest(player))
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
 
 	t.Run("get score", func(t *testing.T) {
 		response := httptest.NewRecorder()
-		server.ServeHTTP(response, playertest.NewGetScoreRequest(player))
+		server.ServeHTTP(response, newGetScoreRequest(player))
 
-		testutils.AssertStatus(t, response.Code, http.StatusOK)
-		testutils.AssertResponseBody(t, response.Body.String(), "3")
+		assertStatus(t, response.Code, http.StatusOK)
+		assertResponseBody(t, response.Body.String(), "3")
 	})
 
 	t.Run("get league", func(t *testing.T) {
 		response := httptest.NewRecorder()
-		server.ServeHTTP(response, playertest.NewLeagueRequest())
-		testutils.AssertStatus(t, response.Code, http.StatusOK)
+		server.ServeHTTP(response, newLeagueRequest())
+		assertStatus(t, response.Code, http.StatusOK)
 
-		got := playertest.GetLeagueFromResponse(t, response.Body)
+		got := getLeagueFromResponse(t, response.Body)
 		want := []common.Player{
 			{Name: "Pepper", Wins: 3},
 		}
-		playertest.AssertLeague(t, got, want)
+		assertLeague(t, got, want)
 	})
 }
