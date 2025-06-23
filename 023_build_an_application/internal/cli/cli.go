@@ -8,7 +8,16 @@ import (
 	"strings"
 )
 
-const PlayerPrompt = "Please enter the number of players: "
+const (
+	// PlayerPrompt is the text asking the user for the number of players.
+	PlayerPrompt = "Please enter the number of players: "
+
+	// BadPlayerInputErrMsg is the text telling the user they did bad things.
+	BadPlayerInputErrMsg = "Bad value received for number of players, please try again with a number"
+
+	// BadWinnerInputMsg is the text telling the user they declared the winner wrong.
+	BadWinnerInputMsg = "invalid winner input, expect format of 'PlayerName wins'"
+)
 
 type CLI struct {
 	In   *bufio.Scanner
