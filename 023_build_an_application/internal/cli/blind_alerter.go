@@ -11,19 +11,17 @@ type BlindAlerter interface {
 	ScheduleAlertAt(duration time.Duration, amount int)
 }
 
+// BlindAlerterFunc allows you to implement BlindAlerter with a function.
 type BlindAlerterFunc func(duration time.Duration, amount int)
 
 // ScheduleAlertAt is BlindAlerterFunc implementation of BlindAlerter.
-func (f BlindAlerterFunc) ScheduleAlertAt(duration time.Duration, amount int) {
-	f(duration, amount)
+func (a BlindAlerterFunc) ScheduleAlertAt(duration time.Duration, amount int) {
+	a(duration, amount)
 }
 
-// StdOutAlerter prints the blind amount to standard output with a given duration.
+// StdOutAlerter will schedule alerts and print them to os.Stdout.
 func StdOutAlerter(duration time.Duration, amount int) {
 	time.AfterFunc(duration, func() {
-		_, err := fmt.Fprintf(os.Stdout, "Blind amount: %d\n", amount)
-		if err != nil {
-			panic(err)
-		}
+		fmt.Fprintf(os.Stdout, "Blind is now %d\n", amount)
 	})
 }
