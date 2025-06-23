@@ -10,6 +10,7 @@ import (
 	"github.com/LPvdT/go-with-tests/application/internal/cli"
 	"github.com/LPvdT/go-with-tests/application/internal/filesystem"
 	_ "github.com/LPvdT/go-with-tests/application/internal/logging"
+	texasholdem "github.com/LPvdT/go-with-tests/application/internal/texas_holdem"
 	"github.com/goforj/godump"
 	"github.com/lmittmann/tint"
 )
@@ -45,7 +46,7 @@ func main() {
 		"<name>", "Teun", "<name>", "Teun wins",
 	)
 
-	game := cli.NewGame(cli.BlindAlerterFunc(cli.StdOutAlerter), store)
+	game := texasholdem.NewTexasHoldem(cli.BlindAlerterFunc(cli.StdOutAlerter), store)
 	cli := cli.NewCLI(os.Stdin, os.Stdout, game)
 
 	checkDumpStdout(game)
@@ -57,7 +58,7 @@ func main() {
 // checkDumpHtml dumps the game state to an HTML file if htmlDump is set to true.
 //
 // Logs a warning when the dump is successful, or an error if dumping is skipped.
-func checkDumpHtml(game *cli.Game) {
+func checkDumpHtml(game *texasholdem.TexasHoldem) {
 	if htmlDump {
 		logger.Warn("Dumping game state to HTML file...", "filename", htmlDumpName)
 
@@ -80,7 +81,7 @@ func checkDumpHtml(game *cli.Game) {
 // checkDumpStdout dumps the game state to stdout if printDump is set to true.
 //
 // Logs a warning when the dump is successful, or an error if dumping is skipped.
-func checkDumpStdout(game *cli.Game) {
+func checkDumpStdout(game *texasholdem.TexasHoldem) {
 	if printDump {
 		logger.Warn("Dumping game state", "sink", "stdout")
 		godump.Dump(game)
