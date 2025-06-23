@@ -3,16 +3,14 @@ package filesystem
 import (
 	"testing"
 
-	"github.com/LPvdT/go-with-tests/application/internal/common"
-	"github.com/LPvdT/go-with-tests/application/playertest"
-	"github.com/LPvdT/go-with-tests/application/testutils"
+	"github.com/LPvdT/go-with-tests/application/common"
 )
 
 func TestFileSystemStore(t *testing.T) {
 	t.Run("league from a reader", func(t *testing.T) {
-		database, cleanDatabase := testutils.CreateTempFile(t, `[
-			{"Name": "Cleo", "Wins": 10},
-			{"Name": "Chris", "Wins": 33}
+		database, cleanDatabase := common.CreateTempFile(t, `[
+			{"Name": "Chris", "Wins": 33},
+			{"Name": "Cleo", "Wins": 10}
 		]`)
 		defer cleanDatabase()
 
@@ -23,19 +21,19 @@ func TestFileSystemStore(t *testing.T) {
 
 		got := store.GetLeague()
 		want := []common.Player{
-			{Name: "Cleo", Wins: 10},
 			{Name: "Chris", Wins: 33},
+			{Name: "Cleo", Wins: 10},
 		}
 
-		playertest.AssertLeague(t, got, want)
+		assertLeague(t, got, want)
 
 		// Read the file again
 		got = store.GetLeague()
-		playertest.AssertLeague(t, got, want)
+		assertLeague(t, got, want)
 	})
 
 	t.Run("get player score", func(t *testing.T) {
-		database, cleanDatabase := testutils.CreateTempFile(t, `[
+		database, cleanDatabase := common.CreateTempFile(t, `[
 			{"Name": "Cleo", "Wins": 10},
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
@@ -48,11 +46,11 @@ func TestFileSystemStore(t *testing.T) {
 		got := store.GetPlayerScore("Chris")
 		want := 33
 
-		testutils.AssertScoreEquals(t, got, want)
+		assertScoreEquals(t, got, want)
 	})
 
 	t.Run("store wins for existing players", func(t *testing.T) {
-		database, cleanDatabase := testutils.CreateTempFile(t, `[
+		database, cleanDatabase := common.CreateTempFile(t, `[
 			{"Name": "Cleo", "Wins": 10},
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
@@ -66,11 +64,11 @@ func TestFileSystemStore(t *testing.T) {
 		got := store.GetPlayerScore("Chris")
 		want := 34
 
-		testutils.AssertScoreEquals(t, got, want)
+		assertScoreEquals(t, got, want)
 	})
 
 	t.Run("store wins for new players", func(t *testing.T) {
-		database, cleanDatabase := testutils.CreateTempFile(t, `[
+		database, cleanDatabase := common.CreateTempFile(t, `[
 			{"Name": "Cleo", "Wins": 10},
 			{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
@@ -85,35 +83,57 @@ func TestFileSystemStore(t *testing.T) {
 		got := store.GetPlayerScore("Pepper")
 		want := 1
 
-		testutils.AssertScoreEquals(t, got, want)
+		assertScoreEquals(t, got, want)
 	})
 
 	t.Run("works with an empty file", func(t *testing.T) {
-		database, cleanDatabase := testutils.CreateTempFile(t, "")
+		database, cleanDatabase := common.CreateTempFile(t, "")
 		defer cleanDatabase()
 
 		_, err := NewFileSystemPlayerStore(database)
 
-		testutils.AssertNoError(t, err)
+		common.AssertNoError(t, err)
 	})
 
 	t.Run("league sorted", func(t *testing.T) {
-		database, cleanDatabase := testutils.CreateTempFile(t, `[
+		database, cleanDatabase := common.CreateTempFile(t, `[
 		{"Name": "Cleo", "Wins": 10},
 		{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
 
 		store, err := NewFileSystemPlayerStore(database)
-		testutils.AssertNoError(t, err)
+		common.AssertNoError(t, err)
 
 		got := store.GetLeague()
 		want := common.League{
 			{Name: "Chris", Wins: 33},
 			{Name: "Cleo", Wins: 10},
 		}
-		playertest.AssertLeague(t, got, want)
+		assertLeague(t, got, want)
 
 		got = store.GetLeague()
-		playertest.AssertLeague(t, got, want)
+		assertLeague(t, got, want)
 	})
+}
+
+// assertScoreEquals checks that two integer scores are equal.
+// It reports a test error if they are not.
+func assertScoreEquals(t testing.TB, got, want int) {
+	t.Helper()
+	if got != want {
+		t.Errorf("got %d want %d", got, want)
+	}
+}
+
+func assertLeague(t testing.TB, got, want []common.Player) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("got %d players in league, want %d", len(got), len(want))
+	}
+
+	for i, player := range got {
+		if player.Name != want[i].Name || player.Wins != want[i].Wins {
+			t.Errorf("got player %v, want %v", player, want[i])
+		}
+	}
 }

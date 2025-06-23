@@ -3,12 +3,10 @@ package common
 import (
 	"io"
 	"testing"
-
-	"github.com/LPvdT/go-with-tests/application/testutils"
 )
 
 func TestTape(t *testing.T) {
-	file, clean := testutils.CreateTempFile(t, "12345")
+	file, clean := CreateTempFile(t, "12345")
 	defer clean()
 
 	tape := &Tape{file}
