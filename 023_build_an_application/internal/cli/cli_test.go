@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/LPvdT/go-with-tests/application/common"
 	mod_cli "github.com/LPvdT/go-with-tests/application/internal/cli"
-	"github.com/LPvdT/go-with-tests/application/playertest"
 )
 
 type ScheduledAlert struct {
@@ -32,7 +32,7 @@ func (s *SpyBlindAlerter) ScheduleAlertAt(at time.Duration, amount int) {
 
 var (
 	dummyBlindAlerter = &SpyBlindAlerter{}
-	dummyPlayerStore  = &playertest.StubPlayerStore{}
+	dummyPlayerStore  = &common.StubPlayerStore{}
 	dummyStdOut       = &bytes.Buffer{}
 	// dummyStdIn        = &bytes.Buffer{}
 )
@@ -79,7 +79,7 @@ func TestCLI(t *testing.T) {
 		cli := mod_cli.NewCLI(in, dummyStdOut, game)
 		cli.PlayPoker()
 
-		playertest.AssertPlayerWin(t, dummyPlayerStore, "Chris")
+		common.AssertPlayerWin(t, dummyPlayerStore, "Chris")
 	})
 
 	t.Run("record cleo win from user input", func(t *testing.T) {
@@ -89,7 +89,7 @@ func TestCLI(t *testing.T) {
 		cli := mod_cli.NewCLI(in, dummyStdOut, game)
 		cli.PlayPoker()
 
-		playertest.AssertPlayerWin(t, dummyPlayerStore, "Cleo")
+		common.AssertPlayerWin(t, dummyPlayerStore, "Cleo")
 	})
 
 	t.Run("it prompts the user to enter the number of players", func(t *testing.T) {
