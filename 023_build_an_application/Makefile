@@ -13,8 +13,9 @@
 # Default OS and architecture
 OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
-COV_OUTPUT ?= coverage.out
-COV_HTML_OUTPUT ?= coverage.html
+
+# Coverage mode (set, count, atomic)
+COV_MODE ?= count
 
 # Go source config
 MAIN_GO_FILE := main.go
@@ -96,8 +97,16 @@ _check-root:
 
 # Recipe for showing available targets
 help: ## Show available make targets
+	@echo "\033[32m\033[4mAvailable targets:\033[0m"
+	@echo ""
 	@grep -E '^[a-zA-Z0-9_/.-]+:.*?## .+$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-30s\033[90m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "\033[0m\033[4mConfiguration:\033[0m"
+	@echo ""
+	@echo "\033[30m  OS: $(OS)\033[0m"
+	@echo "\033[30m  ARCH: $(ARCH)\033[0m"
+	@echo "\033[30m  Coverage mode: $(COV_MODE)\033[0m"
 
 
 # Recipe for cleaning the output directory
@@ -114,14 +123,16 @@ test: _check-root ## Run tests
 
 # Recipe for running tests with coverage
 test-coverage: _check-root ## Run tests with coverage
-	@echo "[*] Running tests with coverage"
-	@if go test -v ./... -coverprofile=${COV_OUTPUT} -covermode=atomic; then \
+	@echo "[*] Running tests with coverage mode: ${COV_MODE}"
+	@if go test ./... -coverprofile=coverage.out -covermode=${COV_MODE}; then \
 		echo "[*] All tests passed"; \
 	else \
 		echo "[*] \033[31m\033[1mNot all tests passed!\033[0m"; \
 	fi || true
-	@go tool cover -html=${COV_OUTPUT} -o ${COV_HTML_OUTPUT}
-	@echo "[*] Coverage report generated at ${COV_HTML_OUTPUT}"
+	@echo "[*] Coverage report for coverage mode: ${COV_MODE}"
+	@go tool cover -func=coverage.out || true
+	@echo "[*] Generating HTML coverage report [${COV_MODE}]: coverage_${COV_MODE}.html"
+	@go tool cover -html=coverage.out -o coverage_${COV_MODE}.html
 
 
 # Recipe for running the CLI
