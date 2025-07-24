@@ -1,6 +1,6 @@
 module github.com/LPvdT/go-with-tests/application
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/goforj/godump v1.2.0
